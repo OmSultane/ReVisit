@@ -279,6 +279,7 @@
 .cat-career { background-color: var(--accent-emerald-bg); color: var(--accent-emerald-text); }
 .cat-projects { background-color: var(--accent-amber-bg); color: var(--accent-amber-text); }
 .cat-personal { background-color: var(--accent-rose-bg); color: var(--accent-rose-text); }
+.cat-design { background-color: var(--accent-cyan-bg); color: var(--accent-cyan-text); }
 
 /* ==========================================================================
    Recent Content Section & Filter Controls
@@ -437,6 +438,97 @@
   fill: #F59E0B;
 }
 
+/* Card Three-Dot Actions Dropdown */
+.card-menu-wrapper {
+  position: relative;
+}
+
+.card-menu-btn {
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  color: var(--gray-400);
+  transition: all var(--transition-fast);
+}
+
+.card-menu-btn:hover,
+.card-menu-btn.active {
+  background-color: var(--gray-100);
+  color: var(--gray-700);
+}
+
+.card-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  padding: 0.35rem;
+  min-width: 140px;
+  z-index: 60;
+  display: none;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.card-dropdown.active {
+  display: flex;
+  animation: dropdownIn 150ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes dropdownIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.5rem 0.65rem;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-xs);
+  font-weight: 500;
+  color: var(--text-secondary);
+  transition: all var(--transition-fast);
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  border: none;
+  background: transparent;
+}
+
+.dropdown-item:hover {
+  background-color: var(--gray-100);
+  color: var(--text-primary);
+}
+
+.dropdown-item svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+.dropdown-item.danger {
+  color: var(--accent-rose-text);
+}
+
+.dropdown-item.danger:hover {
+  background-color: var(--accent-rose-bg);
+  color: var(--accent-rose-text);
+}
+
 .card-body {
   display: flex;
   flex-direction: column;
@@ -506,6 +598,111 @@
   width: 13px;
   height: 13px;
   color: var(--gray-400);
+}
+
+/* ==========================================================================
+   Library (My Content) Page Specific Components
+   ========================================================================== */
+.library-search-container {
+  width: 100%;
+}
+
+.library-search-wrapper {
+  display: flex;
+  align-items: center;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-xl);
+  padding: 0.8rem 1.25rem;
+  box-shadow: var(--shadow-sm);
+  transition: all var(--transition-fast);
+  position: relative;
+}
+
+.library-search-wrapper:focus-within {
+  border-color: var(--primary-500);
+  box-shadow: 0 0 0 4px var(--primary-100), var(--shadow-sm);
+}
+
+.library-search-icon {
+  width: 20px;
+  height: 20px;
+  color: var(--gray-400);
+  margin-right: 0.85rem;
+  flex-shrink: 0;
+}
+
+.library-search-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-size: var(--text-base);
+  color: var(--text-primary);
+  outline: none;
+}
+
+.library-search-input::placeholder {
+  color: var(--text-placeholder);
+}
+
+.library-search-clear {
+  padding: 0.25rem;
+  color: var(--gray-400);
+  border-radius: var(--radius-full);
+  display: none;
+  cursor: pointer;
+  transition: color var(--transition-fast);
+}
+
+.library-search-clear:hover {
+  color: var(--gray-700);
+}
+
+.library-search-clear.active {
+  display: flex;
+}
+
+/* Library Toolbar (Filter Pills + Sort) */
+.library-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.library-sort-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  padding: 0.4rem 0.75rem;
+  box-shadow: var(--shadow-xs);
+  transition: border-color var(--transition-fast);
+}
+
+.library-sort-wrapper:hover,
+.library-sort-wrapper:focus-within {
+  border-color: var(--gray-300);
+}
+
+.sort-label {
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.sort-select {
+  border: none;
+  background: transparent;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--text-primary);
+  cursor: pointer;
+  outline: none;
 }
 
 /* ==========================================================================

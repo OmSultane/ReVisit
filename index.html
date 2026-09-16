@@ -198,71 +198,147 @@
       </header>
 
       <!-- ====================================================================
-           Dashboard Main Content
+           Main Content Body (Multi-View: Dashboard & My Content)
            ==================================================================== -->
       <main class="dashboard-main" id="dashboardMain">
-        <!-- 1. Greeting & Hero Welcome Section -->
-        <section class="welcome-section" aria-label="Welcome and Quick Actions">
-          <div class="welcome-text">
-            <h1 class="welcome-title" id="greetingText">Good evening, Om 👋</h1>
-            <p class="welcome-subtitle">Keep your digital world organized.</p>
-          </div>
-          <div class="welcome-actions">
-            <button class="btn btn-primary" id="addContentBtn">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                <line x1="12" y1="5" x2="12" y2="19"></line>
-                <line x1="5" y1="12" x2="19" y2="12"></line>
+        <!-- VIEW 1: DASHBOARD VIEW -->
+        <div id="dashboardView" class="page-view">
+          <!-- 1. Greeting & Hero Welcome Section -->
+          <section class="welcome-section" aria-label="Welcome and Quick Actions">
+            <div class="welcome-text">
+              <h1 class="welcome-title" id="greetingText">Good evening, Om 👋</h1>
+              <p class="welcome-subtitle">Keep your digital world organized.</p>
+            </div>
+            <div class="welcome-actions">
+              <button class="btn btn-primary" id="addContentBtn">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="12" y1="5" x2="12" y2="19"></line>
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+                <span>Add Content</span>
+              </button>
+            </div>
+          </section>
+
+          <!-- 2. Statistics Metric Cards -->
+          <section aria-label="Library Statistics">
+            <div class="stats-grid" id="statsContainer">
+              <!-- Dynamically populated by app.js -->
+            </div>
+          </section>
+
+          <!-- 3. Categories Overview -->
+          <section id="categoriesSection" aria-label="Content Categories">
+            <div class="section-header">
+              <div class="section-title-wrap">
+                <h2 class="section-title">Categories</h2>
+                <span class="section-count-badge" id="categoryCountBadge">6 active</span>
+              </div>
+              <span class="text-xs text-muted">Click a category to filter</span>
+            </div>
+            <div class="categories-grid" id="categoriesContainer">
+              <!-- Dynamically populated by app.js -->
+            </div>
+          </section>
+
+          <!-- 4. Recent Content Section -->
+          <section id="recentContentSection" aria-label="Recent Content Library">
+            <div class="section-header">
+              <div class="section-title-wrap">
+                <h2 class="section-title">Recent Content</h2>
+                <span class="section-count-badge" id="contentCountBadge">10 items</span>
+              </div>
+
+              <!-- Content Type Filter Pills for Dashboard -->
+              <div class="filter-pills" role="tablist" aria-label="Filter content by type">
+                <button class="filter-pill active" data-type="all">All Items</button>
+                <button class="filter-pill" data-type="document">Documents</button>
+                <button class="filter-pill" data-type="note">Notes</button>
+                <button class="filter-pill" data-type="video">Videos</button>
+                <button class="filter-pill" data-type="link">Links</button>
+                <button class="filter-pill" data-type="image">Images</button>
+              </div>
+            </div>
+
+            <!-- Cards Grid -->
+            <div class="content-grid" id="contentGrid">
+              <!-- Dynamically populated by app.js -->
+            </div>
+          </section>
+        </div>
+
+        <!-- VIEW 2: MY CONTENT / CONTENT LIBRARY VIEW -->
+        <div id="myContentView" class="page-view hidden">
+          <!-- 1. Page Header -->
+          <section class="welcome-section" aria-label="My Content Header">
+            <div class="welcome-text">
+              <h1 class="welcome-title">My Content</h1>
+              <p class="welcome-subtitle">Everything you've saved, organized in one place.</p>
+            </div>
+            <div class="welcome-actions">
+              <button class="btn btn-primary" id="libraryAddContentBtn">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="12" y1="5" x2="12" y2="19"></line>
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+                <span>Add Content</span>
+              </button>
+            </div>
+          </section>
+
+          <!-- 2. Large Primary Search Bar -->
+          <section class="library-search-container" aria-label="Search content library">
+            <div class="library-search-wrapper">
+              <svg class="library-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
               </svg>
-              <span>Add Content</span>
-            </button>
-          </div>
-        </section>
-
-        <!-- 2. Statistics Metric Cards -->
-        <section aria-label="Library Statistics">
-          <div class="stats-grid" id="statsContainer">
-            <!-- Dynamically populated by app.js -->
-          </div>
-        </section>
-
-        <!-- 3. Categories Overview -->
-        <section id="categoriesSection" aria-label="Content Categories">
-          <div class="section-header">
-            <div class="section-title-wrap">
-              <h2 class="section-title">Categories</h2>
-              <span class="section-count-badge">5 active</span>
+              <input 
+                type="text" 
+                class="library-search-input" 
+                id="librarySearchInput" 
+                placeholder="Search your content..." 
+                aria-label="Search your saved content"
+                autocomplete="off"
+              >
+              <button class="library-search-clear" id="librarySearchClearBtn" aria-label="Clear search">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </button>
             </div>
-            <span class="text-xs text-muted">Click a category to filter</span>
-          </div>
-          <div class="categories-grid" id="categoriesContainer">
-            <!-- Dynamically populated by app.js -->
-          </div>
-        </section>
+          </section>
 
-        <!-- 4. Recent Content Section -->
-        <section id="recentContentSection" aria-label="Recent Content Library">
-          <div class="section-header">
-            <div class="section-title-wrap">
-              <h2 class="section-title">Recent Content</h2>
-              <span class="section-count-badge" id="contentCountBadge">8 items</span>
-            </div>
-
-            <!-- Content Type Filter Pills -->
-            <div class="filter-pills" role="tablist" aria-label="Filter content by type">
-              <button class="filter-pill active" data-type="all">All Items</button>
+          <!-- 3. Content Type Filters & Sorting Controls -->
+          <section class="library-toolbar" aria-label="Content filters and sorting">
+            <div class="filter-pills" id="libraryFilterPills" role="tablist" aria-label="Filter content type">
+              <button class="filter-pill active" data-type="all">All</button>
               <button class="filter-pill" data-type="document">Documents</button>
-              <button class="filter-pill" data-type="note">Notes</button>
+              <button class="filter-pill" data-type="image">Images</button>
               <button class="filter-pill" data-type="video">Videos</button>
               <button class="filter-pill" data-type="link">Links</button>
-              <button class="filter-pill" data-type="image">Images</button>
+              <button class="filter-pill" data-type="note">Notes</button>
             </div>
-          </div>
 
-          <!-- Cards Grid -->
-          <div class="content-grid" id="contentGrid">
-            <!-- Dynamically populated by app.js -->
-          </div>
-        </section>
+            <div class="library-sort-wrapper">
+              <span class="sort-label">Sort by:</span>
+              <select class="sort-select" id="librarySortSelect" aria-label="Sort content">
+                <option value="recent" selected>Recently Added</option>
+                <option value="oldest">Oldest</option>
+                <option value="alpha-asc">A-Z</option>
+                <option value="alpha-desc">Z-A</option>
+              </select>
+            </div>
+          </section>
+
+          <!-- 4. Library Cards Grid -->
+          <section aria-label="Content Library Grid">
+            <div class="content-grid" id="libraryContentGrid">
+              <!-- Dynamically populated by app.js -->
+            </div>
+          </section>
+        </div>
       </main>
     </div>
   </div>
@@ -283,6 +359,7 @@
       </div>
 
       <form class="modal-form" id="addContentForm">
+        <input type="hidden" id="contentEditId" value="">
         <div class="form-group">
           <label class="form-label" for="contentTitle">Title <span style="color:var(--accent-rose-text)">*</span></label>
           <input type="text" id="contentTitle" class="form-input" placeholder="e.g. System Design Architecture Notes" required>
@@ -307,6 +384,7 @@
               <option value="Study">Study</option>
               <option value="Career">Career</option>
               <option value="Projects">Projects</option>
+              <option value="Design">Design</option>
               <option value="Personal">Personal</option>
             </select>
           </div>

@@ -41,6 +41,14 @@ const INITIAL_CATEGORIES = [
     description: 'Project documentation, architecture diagrams, and task notes'
   },
   {
+    id: 'design',
+    name: 'Design',
+    slug: 'design',
+    icon: 'palette',
+    accentClass: 'cat-design',
+    description: 'UI/UX inspiration, style guides, and design assets'
+  },
+  {
     id: 'personal',
     name: 'Personal',
     slug: 'personal',
@@ -50,76 +58,89 @@ const INITIAL_CATEGORIES = [
   }
 ];
 
-// Initial Mock Content Items
+// Initial Mock Content Items (Tailored with requested items)
 const INITIAL_CONTENT_ITEMS = [
   {
     id: 'item-1',
-    title: 'Java Collections Framework Complete Notes',
-    type: 'note',
-    category: 'Study',
-    categoryId: 'study',
-    tags: ['java', 'dsa', 'cheat-sheet'],
-    dateDisplay: '2 hours ago',
-    timestamp: Date.now() - 7200000,
+    title: 'Java Collections Notes',
+    type: 'document',
+    category: 'Coding',
+    categoryId: 'coding',
+    tags: ['java', 'dsa'],
+    dateDisplay: 'Today',
+    timestamp: Date.now() - 3600000,
     isFavorite: true,
-    description: 'Comprehensive breakdown of ArrayList, LinkedList, HashMap, TreeMap, and their internal implementations with time complexities.',
+    description: 'Important concepts and examples for Java Collections framework including List, Set, and Map internals.',
     url: 'https://docs.oracle.com/en/java/'
   },
   {
     id: 'item-2',
-    title: 'Spring Boot 3 + PostgreSQL REST API Guide',
-    type: 'video',
+    title: 'Spring Boot Tutorial',
+    type: 'link',
     category: 'Coding',
     categoryId: 'coding',
-    tags: ['spring-boot', 'backend', 'rest-api'],
+    tags: ['java', 'spring-boot'],
     dateDisplay: 'Yesterday',
     timestamp: Date.now() - 86400000,
     isFavorite: true,
-    description: 'Full crash course walkthrough on building secure REST APIs using Spring Security 6 and Spring Data JPA.',
+    description: 'Useful Spring Boot tutorial to revisit later with full code examples for building REST APIs.',
     url: 'https://spring.io/guides'
   },
   {
     id: 'item-3',
-    title: 'DSA 75 Curated Practice Sheet & Solutions',
+    title: 'DSA Practice Sheet',
     type: 'document',
     category: 'Study',
     categoryId: 'study',
-    tags: ['leetcode', 'algorithms', 'neetcode'],
+    tags: ['dsa', 'practice'],
     dateDisplay: '2 days ago',
     timestamp: Date.now() - 172800000,
     isFavorite: false,
-    description: 'High-frequency coding interview problems categorized by pattern: Sliding Window, Two Pointers, and Binary Trees.',
+    description: 'Curated list of high-frequency interview coding patterns: Sliding Window, Binary Search, and Tree traversals.',
     url: 'https://neetcode.io'
   },
   {
     id: 'item-4',
-    title: 'Modern Web Development Resources & Tools',
-    type: 'link',
-    category: 'Projects',
-    categoryId: 'projects',
-    tags: ['frontend', 'css-tricks', 'design-system'],
-    dateDisplay: 'Sep 12, 2026',
-    timestamp: Date.now() - 345600000,
-    isFavorite: false,
-    description: 'Curated list of accessible SVG icon packs, modern color palettes, CSS layout tricks, and frontend utilities.',
-    url: 'https://developer.mozilla.org'
+    title: 'UI Design Inspiration',
+    type: 'image',
+    category: 'Design',
+    categoryId: 'design',
+    tags: ['ui', 'inspiration'],
+    dateDisplay: '3 days ago',
+    timestamp: Date.now() - 259200000,
+    isFavorite: true,
+    description: 'Modern clean dashboard inspiration showcasing minimal SaaS design, glassmorphism, and balanced whitespace.',
+    url: 'https://dribbble.com'
   },
   {
     id: 'item-5',
-    title: 'DigitalVault System Architecture Documentation',
-    type: 'document',
+    title: 'Semester Project Ideas',
+    type: 'note',
     category: 'Projects',
     categoryId: 'projects',
-    tags: ['architecture', 'specs', 'api-docs'],
-    dateDisplay: 'Sep 10, 2026',
-    timestamp: Date.now() - 518400000,
+    tags: ['college', 'ideas'],
+    dateDisplay: '4 days ago',
+    timestamp: Date.now() - 345600000,
     isFavorite: false,
-    description: 'Software requirements specifications, entity-relationship diagrams, and component breakdown for the organizer project.',
+    description: 'Brainstorming topics and feature wishlist for the upcoming major semester capstone submission.',
     url: ''
   },
   {
     id: 'item-6',
-    title: 'System Design Primer & Caching Strategies',
+    title: 'JavaScript Async Tutorial',
+    type: 'video',
+    category: 'Coding',
+    categoryId: 'coding',
+    tags: ['javascript', 'async'],
+    dateDisplay: '5 days ago',
+    timestamp: Date.now() - 432000000,
+    isFavorite: false,
+    description: 'Deep dive video on the JavaScript Event Loop, Microtask Queue, Promises, and modern async/await patterns.',
+    url: 'https://youtube.com'
+  },
+  {
+    id: 'item-7',
+    title: 'System Design Primer Notes',
     type: 'note',
     category: 'Career',
     categoryId: 'career',
@@ -127,34 +148,47 @@ const INITIAL_CONTENT_ITEMS = [
     dateDisplay: 'Sep 08, 2026',
     timestamp: Date.now() - 691200000,
     isFavorite: true,
-    description: 'In-depth notes on Cache-Aside, Write-Through, Redis clustered setups, and database sharding techniques.',
-    url: ''
-  },
-  {
-    id: 'item-7',
-    title: 'Cloud VPC Architecture & Subnet Diagrams',
-    type: 'image',
-    category: 'Projects',
-    categoryId: 'projects',
-    tags: ['aws', 'cloud', 'diagram'],
-    dateDisplay: 'Sep 05, 2026',
-    timestamp: Date.now() - 950400000,
-    isFavorite: false,
-    description: 'High-resolution diagram illustrating multi-tier architecture with public/private subnets and load balancer routing.',
+    description: 'Comprehensive takeaways covering Caching strategies, Load Balancing, CDN distribution, and CAP Theorem trade-offs.',
     url: ''
   },
   {
     id: 'item-8',
-    title: 'Software Engineer Resume & Portfolio Checklist',
+    title: 'Cloud VPC Architecture Diagrams',
+    type: 'image',
+    category: 'Projects',
+    categoryId: 'projects',
+    tags: ['aws', 'cloud', 'architecture'],
+    dateDisplay: 'Sep 05, 2026',
+    timestamp: Date.now() - 950400000,
+    isFavorite: false,
+    description: 'High-resolution diagram illustrating multi-tier AWS VPC layout, public/private subnets, and NAT Gateway routing.',
+    url: ''
+  },
+  {
+    id: 'item-9',
+    title: 'Software Engineer Resume Checklist',
     type: 'document',
     category: 'Career',
     categoryId: 'career',
-    tags: ['resume', 'interview-prep', 'portfolio'],
+    tags: ['resume', 'career', 'portfolio'],
     dateDisplay: 'Sep 02, 2026',
     timestamp: Date.now() - 1209600000,
     isFavorite: true,
-    description: 'Action verb bullet formulations, ATS keyword optimization, and project deployment guidelines.',
+    description: 'ATS optimization checklist, action verbs, quantified metrics, and portfolio link guidelines for tech roles.',
     url: ''
+  },
+  {
+    id: 'item-10',
+    title: 'Web Development Resources & Guides',
+    type: 'link',
+    category: 'Projects',
+    categoryId: 'projects',
+    tags: ['frontend', 'css', 'tools'],
+    dateDisplay: 'Aug 28, 2026',
+    timestamp: Date.now() - 1641600000,
+    isFavorite: false,
+    description: 'Bookmarked list of accessible SVG icon packs, modern color palettes, CSS layout tricks, and frontend utilities.',
+    url: 'https://developer.mozilla.org'
   }
 ];
 
@@ -181,6 +215,11 @@ class ContentDataStore {
   // Get all content items
   getItems() {
     return [...this.items];
+  }
+
+  // Get single item by ID
+  getItem(itemId) {
+    return this.items.find(i => i.id === itemId) || null;
   }
 
   // Get categories with dynamic counts
@@ -216,12 +255,12 @@ class ContentDataStore {
     };
   }
 
-  // Filter content
-  filterItems({ search = '', category = 'all', type = 'all', onlyFavorites = false } = {}) {
+  // Filter & Sort content
+  filterItems({ search = '', category = 'all', type = 'all', onlyFavorites = false, sort = 'recent' } = {}) {
     const normalizedSearch = search.trim().toLowerCase();
 
-    return this.items.filter(item => {
-      // Search matching (title, description, tags)
+    const filtered = this.items.filter(item => {
+      // Search matching (title, description, tags, category)
       if (normalizedSearch) {
         const matchesTitle = item.title.toLowerCase().includes(normalizedSearch);
         const matchesDesc = item.description ? item.description.toLowerCase().includes(normalizedSearch) : false;
@@ -255,6 +294,20 @@ class ContentDataStore {
 
       return true;
     });
+
+    // Sorting
+    if (sort === 'oldest') {
+      filtered.sort((a, b) => a.timestamp - b.timestamp);
+    } else if (sort === 'alpha-asc' || sort === 'a-z') {
+      filtered.sort((a, b) => a.title.localeCompare(b.title));
+    } else if (sort === 'alpha-desc' || sort === 'z-a') {
+      filtered.sort((a, b) => b.title.localeCompare(a.title));
+    } else {
+      // Default: 'recent' (newest first)
+      filtered.sort((a, b) => b.timestamp - a.timestamp);
+    }
+
+    return filtered;
   }
 
   // Add new item
@@ -266,7 +319,7 @@ class ContentDataStore {
       category: itemData.category || 'Coding',
       categoryId: (itemData.category || 'coding').toLowerCase(),
       tags: itemData.tags ? itemData.tags.map(t => t.trim().toLowerCase()).filter(Boolean) : [],
-      dateDisplay: 'Just now',
+      dateDisplay: 'Today',
       timestamp: Date.now(),
       isFavorite: false,
       description: itemData.description || '',
@@ -277,6 +330,27 @@ class ContentDataStore {
     this.items.unshift(newItem);
     this.notify();
     return newItem;
+  }
+
+  // Update existing item
+  updateItem(itemId, updatedData) {
+    const item = this.items.find(i => i.id === itemId);
+    if (!item) return null;
+
+    if (updatedData.title !== undefined) item.title = updatedData.title;
+    if (updatedData.type !== undefined) item.type = updatedData.type;
+    if (updatedData.category !== undefined) {
+      item.category = updatedData.category;
+      item.categoryId = updatedData.category.toLowerCase();
+    }
+    if (updatedData.tags !== undefined) {
+      item.tags = updatedData.tags.map(t => t.trim().toLowerCase()).filter(Boolean);
+    }
+    if (updatedData.description !== undefined) item.description = updatedData.description;
+    if (updatedData.url !== undefined) item.url = updatedData.url;
+
+    this.notify();
+    return item;
   }
 
   // Toggle favorite status
