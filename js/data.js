@@ -192,12 +192,37 @@ const INITIAL_CONTENT_ITEMS = [
   }
 ];
 
-// In-Memory Reactive State
+// In-Memory Reactive State with localStorage persistence
+const STORAGE_KEY = 'digitalvault_content_items_v1';
+
 class ContentDataStore {
   constructor() {
     this.categories = [...INITIAL_CATEGORIES];
-    this.items = [...INITIAL_CONTENT_ITEMS];
+    this.items = this.loadFromStorage();
     this.listeners = [];
+  }
+
+  loadFromStorage() {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
+        }
+      }
+    } catch (e) {
+      console.warn('Could not load from localStorage:', e);
+    }
+    return [...INITIAL_CONTENT_ITEMS];
+  }
+
+  saveToStorage() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(this.items));
+    } catch (e) {
+      console.warn('Could not save to localStorage:', e);
+    }
   }
 
   // Subscribe to changes
@@ -209,6 +234,7 @@ class ContentDataStore {
   }
 
   notify() {
+    this.saveToStorage();
     this.listeners.forEach(fn => fn());
   }
 
@@ -321,9 +347,11 @@ class ContentDataStore {
       tags: itemData.tags ? itemData.tags.map(t => t.trim().toLowerCase()).filter(Boolean) : [],
       dateDisplay: 'Today',
       timestamp: Date.now(),
-      isFavorite: false,
+      isFavorite: Boolean(itemData.isFavorite),
       description: itemData.description || '',
-      url: itemData.url || ''
+      url: itemData.url || '',
+      thumbnailUrl: itemData.thumbnailUrl || '',
+      fileData: itemData.fileData || null
     };
 
     // Prepend new item

@@ -2,15 +2,21 @@
  * Digital Content Organizer (DigitalVault)
  * Main Application Logic & UI Controller
  * 
- * Supports seamless multi-view SPA navigation between Dashboard and My Content,
- * live search, type filters, custom sorting, item editing, favorite toggling,
- * three-dot menu actions (Open, Edit, Delete), and toast notifications.
+ * Supports:
+ * 1. Multi-view SPA navigation (Dashboard, My Content, Add Content).
+ * 2. Add Content page with dynamic type switcher (Document, Image, Video, Link, Note).
+ * 3. Drag-and-drop dropzones with local previews and file removal.
+ * 4. Interactive Tag Chip input with Enter/comma separation and backspace deletion.
+ * 5. Large distraction-free Note writing editor with real-time character/word count.
+ * 6. Frontend validation with clear inline error indicators.
+ * 7. Saving content into local mock store with localStorage persistence and redirect to My Content.
+ * 8. Card actions: Open, Edit, Delete, Favorite toggle, live search, and sorting.
  */
 
 document.addEventListener('DOMContentLoaded', () => {
   // Application State
   const state = {
-    currentView: 'dashboard', // 'dashboard' | 'my-content'
+    currentView: 'dashboard', // 'dashboard' | 'my-content' | 'add-content'
     // Dashboard state
     dashboardSearch: '',
     dashboardCategory: 'all',
@@ -22,11 +28,23 @@ document.addEventListener('DOMContentLoaded', () => {
     activeDropdownId: null
   };
 
+  // Add Content Form Specific State
+  const addFormState = {
+    type: 'document',
+    tags: [],
+    isFavorite: false,
+    documentFile: null,
+    imageFile: null,
+    imagePreviewUrl: null,
+    videoFile: null
+  };
+
   // DOM Element References
   const elements = {
     // Views
     dashboardView: document.getElementById('dashboardView'),
     myContentView: document.getElementById('myContentView'),
+    addContentView: document.getElementById('addContentView'),
 
     // Topbar & Navigation
     greetingText: document.getElementById('greetingText'),
@@ -58,7 +76,60 @@ document.addEventListener('DOMContentLoaded', () => {
     librarySortSelect: document.getElementById('librarySortSelect'),
     libraryContentGrid: document.getElementById('libraryContentGrid'),
 
-    // Modal Dialog Elements
+    // Add Content Page Elements
+    backToMyContentBtn: document.getElementById('backToMyContentBtn'),
+    addTypeSelector: document.getElementById('addTypeSelector'),
+    typeSelectorBtns: document.querySelectorAll('#addTypeSelector .type-selector-btn'),
+    addPageForm: document.getElementById('addPageForm'),
+    cancelAddPageBtn: document.getElementById('cancelAddPageBtn'),
+    submitAddPageBtn: document.getElementById('submitAddPageBtn'),
+
+    // Type Specific Blocks & Dropzones
+    documentFieldBlock: document.getElementById('documentFieldBlock'),
+    documentDropzone: document.getElementById('documentDropzone'),
+    documentFileInput: document.getElementById('documentFileInput'),
+    documentFileInfo: document.getElementById('documentFileInfo'),
+    docFileName: document.getElementById('docFileName'),
+    docFileSize: document.getElementById('docFileSize'),
+    docFileRemoveBtn: document.getElementById('docFileRemoveBtn'),
+
+    imageFieldBlock: document.getElementById('imageFieldBlock'),
+    imageDropzone: document.getElementById('imageDropzone'),
+    imageFileInput: document.getElementById('imageFileInput'),
+    imagePreviewContainer: document.getElementById('imagePreviewContainer'),
+    imagePreviewImg: document.getElementById('imagePreviewImg'),
+    imagePreviewRemoveBtn: document.getElementById('imagePreviewRemoveBtn'),
+
+    videoFieldBlock: document.getElementById('videoFieldBlock'),
+    videoDropzone: document.getElementById('videoDropzone'),
+    videoFileInput: document.getElementById('videoFileInput'),
+    videoFileInfo: document.getElementById('videoFileInfo'),
+    videoFileName: document.getElementById('videoFileName'),
+    videoFileSize: document.getElementById('videoFileSize'),
+    videoFileRemoveBtn: document.getElementById('videoFileRemoveBtn'),
+
+    linkFieldBlock: document.getElementById('linkFieldBlock'),
+    addLinkUrl: document.getElementById('addLinkUrl'),
+    linkUrlError: document.getElementById('linkUrlError'),
+
+    noteFieldBlock: document.getElementById('noteFieldBlock'),
+    addNoteContent: document.getElementById('addNoteContent'),
+    noteCharCounter: document.getElementById('noteCharCounter'),
+    noteContentError: document.getElementById('noteContentError'),
+
+    // Common Form Fields
+    addPageTitle: document.getElementById('addPageTitle'),
+    titleError: document.getElementById('titleError'),
+    addPageCategory: document.getElementById('addPageCategory'),
+    categoryError: document.getElementById('categoryError'),
+    tagChipWrapper: document.getElementById('tagChipWrapper'),
+    addTagInput: document.getElementById('addTagInput'),
+    secondaryUrlGroup: document.getElementById('secondaryUrlGroup'),
+    addSecondaryUrl: document.getElementById('addSecondaryUrl'),
+    addPageDescription: document.getElementById('addPageDescription'),
+    addFavoriteToggleCard: document.getElementById('addFavoriteToggleCard'),
+
+    // Modal Dialog Elements (Retained for quick edit)
     modalOverlay: document.getElementById('modalOverlay'),
     modalTitle: document.getElementById('modalTitle'),
     modalCloseBtn: document.getElementById('modalCloseBtn'),
@@ -96,7 +167,6 @@ document.addEventListener('DOMContentLoaded', () => {
     trashIcon: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>`
   };
 
-  // Map category icon names to SVG strings
   const getCategoryIconSvg = (iconName) => {
     switch (iconName) {
       case 'code': return ICONS.code;
@@ -107,6 +177,15 @@ document.addEventListener('DOMContentLoaded', () => {
       case 'user': return ICONS.user;
       default: return ICONS.code;
     }
+  };
+
+  // Helper to format byte sizes
+  const formatBytes = (bytes) => {
+    if (!bytes || bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
   };
 
   // ==========================================================================
@@ -126,23 +205,35 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   // ==========================================================================
-  // SPA View Routing (Dashboard vs My Content)
+  // SPA View Routing (Dashboard, My Content, Add Content)
   // ==========================================================================
   const switchView = (viewName) => {
     state.currentView = viewName;
     state.activeDropdownId = null;
 
+    // Hide all views first
+    if (elements.dashboardView) elements.dashboardView.classList.add('hidden');
+    if (elements.myContentView) elements.myContentView.classList.add('hidden');
+    if (elements.addContentView) elements.addContentView.classList.add('hidden');
+
+    elements.sidebarNavLinks.forEach(link => link.classList.remove('active'));
+
     if (viewName === 'my-content') {
-      elements.dashboardView.classList.add('hidden');
-      elements.myContentView.classList.remove('hidden');
-      elements.sidebarNavLinks.forEach(link => link.classList.remove('active'));
+      if (elements.myContentView) elements.myContentView.classList.remove('hidden');
       if (elements.navMyContent) elements.navMyContent.classList.add('active');
       renderMyContent();
       window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (viewName === 'add-content') {
+      if (elements.addContentView) elements.addContentView.classList.remove('hidden');
+      if (elements.navMyContent) elements.navMyContent.classList.add('active');
+      // Focus title input
+      setTimeout(() => {
+        if (elements.addPageTitle) elements.addPageTitle.focus();
+      }, 50);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } else {
-      elements.myContentView.classList.add('hidden');
-      elements.dashboardView.classList.remove('hidden');
-      elements.sidebarNavLinks.forEach(link => link.classList.remove('active'));
+      // Default: dashboard
+      if (elements.dashboardView) elements.dashboardView.classList.remove('hidden');
       if (elements.navDashboard) elements.navDashboard.classList.add('active');
       renderStats();
       renderCategories();
@@ -155,6 +246,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const hash = window.location.hash.toLowerCase();
     if (hash === '#my-content') {
       switchView('my-content');
+    } else if (hash === '#add-content') {
+      switchView('add-content');
     } else if (hash === '#favorites') {
       switchView('dashboard');
       state.dashboardCategory = 'all';
@@ -263,15 +356,10 @@ document.addEventListener('DOMContentLoaded', () => {
       `;
     }).join('');
 
-    // Click events for category filter
     elements.categoriesContainer.querySelectorAll('.category-card').forEach(card => {
       card.addEventListener('click', () => {
         const slug = card.getAttribute('data-category-slug');
-        if (state.dashboardCategory === slug) {
-          state.dashboardCategory = 'all';
-        } else {
-          state.dashboardCategory = slug;
-        }
+        state.dashboardCategory = state.dashboardCategory === slug ? 'all' : slug;
         renderCategories();
         renderRecentContent();
       });
@@ -350,6 +438,17 @@ document.addEventListener('DOMContentLoaded', () => {
           <div class="card-body">
             <h3 class="card-title" title="${item.title}">${item.title}</h3>
             <span class="card-category-tag">${item.category}</span>
+            ${item.thumbnailUrl ? `
+              <div style="width:100%; max-height:160px; overflow:hidden; border-radius:var(--radius-md); margin-top:0.35rem; background:var(--gray-100); border:1px solid var(--border-default);">
+                <img src="${item.thumbnailUrl}" alt="${item.title}" style="width:100%; height:140px; object-fit:cover;">
+              </div>
+            ` : ''}
+            ${item.fileData ? `
+              <div style="display:inline-flex; align-items:center; gap:0.35rem; font-size:0.7rem; color:var(--text-muted); background:var(--gray-50); border:1px solid var(--border-default); padding:0.15rem 0.45rem; border-radius:var(--radius-sm); margin-top:0.25rem;">
+                <span>📎 ${item.fileData.name}</span>
+                <span>(${formatBytes(item.fileData.size)})</span>
+              </div>
+            ` : ''}
             ${item.description ? `<p class="text-xs text-muted" style="line-height:1.4; margin-top:2px;">${item.description}</p>` : ''}
             ${tagsHtml ? `<div class="card-tags">${tagsHtml}</div>` : ''}
           </div>
@@ -369,7 +468,6 @@ document.addEventListener('DOMContentLoaded', () => {
       `;
     }).join('');
 
-    // Dashboard Favorite toggle
     elements.contentGrid.querySelectorAll('[data-action="toggle-fav"]').forEach(btn => {
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -394,16 +492,10 @@ document.addEventListener('DOMContentLoaded', () => {
       sort: state.librarySort
     });
 
-    // Handle clear search button visibility
     if (elements.librarySearchClearBtn) {
-      if (state.librarySearch.trim().length > 0) {
-        elements.librarySearchClearBtn.classList.add('active');
-      } else {
-        elements.librarySearchClearBtn.classList.remove('active');
-      }
+      elements.librarySearchClearBtn.classList.toggle('active', state.librarySearch.trim().length > 0);
     }
 
-    // Empty state handling
     if (items.length === 0) {
       elements.libraryContentGrid.innerHTML = `
         <div class="empty-state">
@@ -434,7 +526,6 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    // Render cards with three-dot action menu
     elements.libraryContentGrid.innerHTML = items.map(item => {
       const typeIcon = ICONS[item.type] || ICONS.document;
       const isFav = item.isFavorite;
@@ -452,12 +543,10 @@ document.addEventListener('DOMContentLoaded', () => {
               ${item.type}
             </span>
             <div class="card-actions">
-              <!-- Favorite Toggle Button -->
               <button class="fav-btn ${isFav ? 'active' : ''}" data-action="toggle-fav" data-id="${item.id}" title="${isFav ? 'Remove from favorites' : 'Add to favorites'}" aria-label="Favorite">
                 ${ICONS.star}
               </button>
 
-              <!-- Three-dot Menu Trigger & Dropdown -->
               <div class="card-menu-wrapper">
                 <button class="card-menu-btn ${isDropdownActive ? 'active' : ''}" data-action="open-menu" data-id="${item.id}" title="Card actions" aria-label="More options">
                   ${ICONS.moreVertical}
@@ -483,6 +572,17 @@ document.addEventListener('DOMContentLoaded', () => {
           <div class="card-body">
             <h3 class="card-title" title="${item.title}">${item.title}</h3>
             <span class="card-category-tag">${item.category}</span>
+            ${item.thumbnailUrl ? `
+              <div style="width:100%; max-height:160px; overflow:hidden; border-radius:var(--radius-md); margin-top:0.35rem; background:var(--gray-100); border:1px solid var(--border-default);">
+                <img src="${item.thumbnailUrl}" alt="${item.title}" style="width:100%; height:140px; object-fit:cover;">
+              </div>
+            ` : ''}
+            ${item.fileData ? `
+              <div style="display:inline-flex; align-items:center; gap:0.35rem; font-size:0.7rem; color:var(--text-muted); background:var(--gray-50); border:1px solid var(--border-default); padding:0.15rem 0.45rem; border-radius:var(--radius-sm); margin-top:0.25rem;">
+                <span>📎 ${item.fileData.name}</span>
+                <span>(${formatBytes(item.fileData.size)})</span>
+              </div>
+            ` : ''}
             ${item.description ? `<p class="text-xs text-muted" style="line-height:1.4; margin-top:2px;">${item.description}</p>` : ''}
             ${tagsHtml ? `<div class="card-tags">${tagsHtml}</div>` : ''}
           </div>
@@ -502,11 +602,9 @@ document.addEventListener('DOMContentLoaded', () => {
       `;
     }).join('');
 
-    // Attach card action listeners
     attachLibraryCardEvents();
   };
 
-  // Card interaction event listeners
   const attachLibraryCardEvents = () => {
     // 1. Favorite toggle
     elements.libraryContentGrid.querySelectorAll('[data-action="toggle-fav"]').forEach(btn => {
@@ -576,7 +674,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   };
 
-  // Close dropdowns when clicking outside
+  // Close dropdowns on outside click
   document.addEventListener('click', (e) => {
     if (state.activeDropdownId && !e.target.closest('.card-menu-wrapper')) {
       state.activeDropdownId = null;
@@ -590,9 +688,591 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // ==========================================================================
+  // Add Content Page - Form Logic & Interactive Handlers
+  // ==========================================================================
+
+  // 1. Content Type Switcher
+  const setContentType = (type) => {
+    addFormState.type = type;
+
+    // Update buttons UI
+    elements.typeSelectorBtns.forEach(btn => {
+      const isSelected = btn.getAttribute('data-type') === type;
+      btn.classList.toggle('active', isSelected);
+      btn.setAttribute('aria-selected', isSelected);
+    });
+
+    // Hide all type field blocks
+    if (elements.documentFieldBlock) elements.documentFieldBlock.style.display = 'none';
+    if (elements.imageFieldBlock) elements.imageFieldBlock.style.display = 'none';
+    if (elements.videoFieldBlock) elements.videoFieldBlock.style.display = 'none';
+    if (elements.linkFieldBlock) elements.linkFieldBlock.style.display = 'none';
+    if (elements.noteFieldBlock) elements.noteFieldBlock.style.display = 'none';
+
+    // Show selected block
+    if (type === 'document') {
+      if (elements.documentFieldBlock) elements.documentFieldBlock.style.display = 'block';
+      if (elements.secondaryUrlGroup) elements.secondaryUrlGroup.style.display = 'block';
+    } else if (type === 'image') {
+      if (elements.imageFieldBlock) elements.imageFieldBlock.style.display = 'block';
+      if (elements.secondaryUrlGroup) elements.secondaryUrlGroup.style.display = 'block';
+    } else if (type === 'video') {
+      if (elements.videoFieldBlock) elements.videoFieldBlock.style.display = 'block';
+      if (elements.secondaryUrlGroup) elements.secondaryUrlGroup.style.display = 'block';
+    } else if (type === 'link') {
+      if (elements.linkFieldBlock) elements.linkFieldBlock.style.display = 'block';
+      if (elements.secondaryUrlGroup) elements.secondaryUrlGroup.style.display = 'none';
+      if (elements.addLinkUrl) setTimeout(() => elements.addLinkUrl.focus(), 50);
+    } else if (type === 'note') {
+      if (elements.noteFieldBlock) elements.noteFieldBlock.style.display = 'block';
+      if (elements.secondaryUrlGroup) elements.secondaryUrlGroup.style.display = 'block';
+    }
+
+    clearValidationErrors();
+  };
+
+  elements.typeSelectorBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const type = btn.getAttribute('data-type');
+      if (type) setContentType(type);
+    });
+  });
+
+  // 2. Document Dropzone & Selection
+  const setupDocumentDropzone = () => {
+    if (!elements.documentDropzone || !elements.documentFileInput) return;
+
+    elements.documentDropzone.addEventListener('click', () => {
+      elements.documentFileInput.click();
+    });
+
+    ['dragenter', 'dragover'].forEach(eventName => {
+      elements.documentDropzone.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        elements.documentDropzone.classList.add('dragover');
+      });
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+      elements.documentDropzone.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        elements.documentDropzone.classList.remove('dragover');
+      });
+    });
+
+    elements.documentDropzone.addEventListener('drop', (e) => {
+      const files = e.dataTransfer.files;
+      if (files && files.length > 0) {
+        handleDocumentFile(files[0]);
+      }
+    });
+
+    elements.documentFileInput.addEventListener('change', (e) => {
+      if (e.target.files && e.target.files.length > 0) {
+        handleDocumentFile(e.target.files[0]);
+      }
+    });
+
+    if (elements.docFileRemoveBtn) {
+      elements.docFileRemoveBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        addFormState.documentFile = null;
+        elements.documentFileInput.value = '';
+        elements.documentFileInfo.style.display = 'none';
+        elements.documentDropzone.style.display = 'flex';
+      });
+    }
+  };
+
+  const handleDocumentFile = (file) => {
+    addFormState.documentFile = {
+      name: file.name,
+      size: file.size,
+      type: file.type
+    };
+
+    if (elements.docFileName) elements.docFileName.textContent = file.name;
+    if (elements.docFileSize) elements.docFileSize.textContent = formatBytes(file.size);
+
+    // Auto-fill title if empty
+    if (elements.addPageTitle && !elements.addPageTitle.value.trim()) {
+      const cleanName = file.name.replace(/\.[^/.]+$/, "").replace(/[-_]/g, " ");
+      elements.addPageTitle.value = cleanName.charAt(0).toUpperCase() + cleanName.slice(1);
+    }
+
+    elements.documentDropzone.style.display = 'none';
+    elements.documentFileInfo.style.display = 'flex';
+  };
+
+  // 3. Image Dropzone & Preview
+  const setupImageDropzone = () => {
+    if (!elements.imageDropzone || !elements.imageFileInput) return;
+
+    elements.imageDropzone.addEventListener('click', () => {
+      elements.imageFileInput.click();
+    });
+
+    ['dragenter', 'dragover'].forEach(eventName => {
+      elements.imageDropzone.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        elements.imageDropzone.classList.add('dragover');
+      });
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+      elements.imageDropzone.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        elements.imageDropzone.classList.remove('dragover');
+      });
+    });
+
+    elements.imageDropzone.addEventListener('drop', (e) => {
+      const files = e.dataTransfer.files;
+      if (files && files.length > 0) {
+        handleImageFile(files[0]);
+      }
+    });
+
+    elements.imageFileInput.addEventListener('change', (e) => {
+      if (e.target.files && e.target.files.length > 0) {
+        handleImageFile(e.target.files[0]);
+      }
+    });
+
+    if (elements.imagePreviewRemoveBtn) {
+      elements.imagePreviewRemoveBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        addFormState.imageFile = null;
+        addFormState.imagePreviewUrl = null;
+        elements.imageFileInput.value = '';
+        elements.imagePreviewContainer.style.display = 'none';
+        elements.imageDropzone.style.display = 'flex';
+      });
+    }
+  };
+
+  const handleImageFile = (file) => {
+    if (!file.type.startsWith('image/')) {
+      showToast('Please select a valid image file');
+      return;
+    }
+
+    addFormState.imageFile = {
+      name: file.name,
+      size: file.size,
+      type: file.type
+    };
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const dataUrl = e.target.result;
+      addFormState.imagePreviewUrl = dataUrl;
+      if (elements.imagePreviewImg) elements.imagePreviewImg.src = dataUrl;
+      elements.imageDropzone.style.display = 'none';
+      elements.imagePreviewContainer.style.display = 'flex';
+    };
+    reader.readAsDataURL(file);
+
+    // Auto-fill title if empty
+    if (elements.addPageTitle && !elements.addPageTitle.value.trim()) {
+      const cleanName = file.name.replace(/\.[^/.]+$/, "").replace(/[-_]/g, " ");
+      elements.addPageTitle.value = cleanName.charAt(0).toUpperCase() + cleanName.slice(1);
+    }
+  };
+
+  // 4. Video Dropzone & Selection
+  const setupVideoDropzone = () => {
+    if (!elements.videoDropzone || !elements.videoFileInput) return;
+
+    elements.videoDropzone.addEventListener('click', () => {
+      elements.videoFileInput.click();
+    });
+
+    ['dragenter', 'dragover'].forEach(eventName => {
+      elements.videoDropzone.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        elements.videoDropzone.classList.add('dragover');
+      });
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+      elements.videoDropzone.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        elements.videoDropzone.classList.remove('dragover');
+      });
+    });
+
+    elements.videoDropzone.addEventListener('drop', (e) => {
+      const files = e.dataTransfer.files;
+      if (files && files.length > 0) {
+        handleVideoFile(files[0]);
+      }
+    });
+
+    elements.videoFileInput.addEventListener('change', (e) => {
+      if (e.target.files && e.target.files.length > 0) {
+        handleVideoFile(e.target.files[0]);
+      }
+    });
+
+    if (elements.videoFileRemoveBtn) {
+      elements.videoFileRemoveBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        addFormState.videoFile = null;
+        elements.videoFileInput.value = '';
+        elements.videoFileInfo.style.display = 'none';
+        elements.videoDropzone.style.display = 'flex';
+      });
+    }
+  };
+
+  const handleVideoFile = (file) => {
+    addFormState.videoFile = {
+      name: file.name,
+      size: file.size,
+      type: file.type
+    };
+
+    if (elements.videoFileName) elements.videoFileName.textContent = file.name;
+    if (elements.videoFileSize) elements.videoFileSize.textContent = formatBytes(file.size);
+
+    if (elements.addPageTitle && !elements.addPageTitle.value.trim()) {
+      const cleanName = file.name.replace(/\.[^/.]+$/, "").replace(/[-_]/g, " ");
+      elements.addPageTitle.value = cleanName.charAt(0).toUpperCase() + cleanName.slice(1);
+    }
+
+    elements.videoDropzone.style.display = 'none';
+    elements.videoFileInfo.style.display = 'flex';
+  };
+
+  // 5. Interactive Tag Chip Input
+  const renderTagChips = () => {
+    if (!elements.tagChipWrapper || !elements.addTagInput) return;
+
+    // Remove existing chips
+    elements.tagChipWrapper.querySelectorAll('.tag-chip-item').forEach(chip => chip.remove());
+
+    // Insert chips before the input field
+    addFormState.tags.forEach(tag => {
+      const chip = document.createElement('span');
+      chip.className = 'tag-chip-item';
+      chip.innerHTML = `
+        #${tag}
+        <button type="button" class="tag-chip-remove-btn" data-tag="${tag}" aria-label="Remove tag ${tag}">✕</button>
+      `;
+      elements.tagChipWrapper.insertBefore(chip, elements.addTagInput);
+    });
+  };
+
+  if (elements.tagChipWrapper && elements.addTagInput) {
+    // Focus input when clicking tag area
+    elements.tagChipWrapper.addEventListener('click', (e) => {
+      if (e.target.classList.contains('tag-chip-remove-btn')) {
+        const tagToRemove = e.target.getAttribute('data-tag');
+        addFormState.tags = addFormState.tags.filter(t => t !== tagToRemove);
+        renderTagChips();
+        elements.addTagInput.focus();
+        return;
+      }
+      elements.addTagInput.focus();
+    });
+
+    elements.addTagInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ',') {
+        e.preventDefault();
+        const value = elements.addTagInput.value.trim().toLowerCase().replace(/^#+/, '').replace(/,/g, '');
+        if (value && !addFormState.tags.includes(value)) {
+          addFormState.tags.push(value);
+          elements.addTagInput.value = '';
+          renderTagChips();
+        } else {
+          elements.addTagInput.value = '';
+        }
+      } else if (e.key === 'Backspace' && elements.addTagInput.value === '') {
+        if (addFormState.tags.length > 0) {
+          addFormState.tags.pop();
+          renderTagChips();
+        }
+      }
+    });
+  }
+
+  // 6. Note Editor Word & Character Counter
+  if (elements.addNoteContent && elements.noteCharCounter) {
+    elements.addNoteContent.addEventListener('input', (e) => {
+      const text = e.target.value.trim();
+      const words = text ? text.split(/\s+/).length : 0;
+      const chars = e.target.value.length;
+      elements.noteCharCounter.textContent = `${words} ${words === 1 ? 'word' : 'words'}, ${chars} ${chars === 1 ? 'character' : 'characters'}`;
+      if (elements.noteContentError) elements.noteContentError.style.display = 'none';
+      e.target.closest('.note-editor-wrapper')?.classList.remove('is-invalid');
+    });
+  }
+
+  // 7. Favorite Toggle Switch
+  if (elements.addFavoriteToggleCard) {
+    elements.addFavoriteToggleCard.addEventListener('click', () => {
+      addFormState.isFavorite = !addFormState.isFavorite;
+      elements.addFavoriteToggleCard.classList.toggle('active', addFormState.isFavorite);
+      elements.addFavoriteToggleCard.setAttribute('aria-checked', addFormState.isFavorite);
+    });
+
+    elements.addFavoriteToggleCard.addEventListener('keydown', (e) => {
+      if (e.key === ' ' || e.key === 'Enter') {
+        e.preventDefault();
+        elements.addFavoriteToggleCard.click();
+      }
+    });
+  }
+
+  // 8. Validation Helpers
+  const clearValidationErrors = () => {
+    document.querySelectorAll('.form-error-msg').forEach(el => el.style.display = 'none');
+    document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+  };
+
+  const validateAddForm = () => {
+    clearValidationErrors();
+    let isValid = true;
+    let firstErrorField = null;
+
+    // Title validation
+    const title = elements.addPageTitle ? elements.addPageTitle.value.trim() : '';
+    if (!title) {
+      isValid = false;
+      if (elements.titleError) {
+        elements.titleError.textContent = 'Please enter a title for this content.';
+        elements.titleError.style.display = 'flex';
+      }
+      if (elements.addPageTitle) elements.addPageTitle.classList.add('is-invalid');
+      if (!firstErrorField) firstErrorField = elements.addPageTitle;
+    }
+
+    // Category validation
+    const category = elements.addPageCategory ? elements.addPageCategory.value : '';
+    if (!category) {
+      isValid = false;
+      if (elements.categoryError) {
+        elements.categoryError.textContent = 'Please select a category.';
+        elements.categoryError.style.display = 'flex';
+      }
+      if (!firstErrorField) firstErrorField = elements.addPageCategory;
+    }
+
+    // Type-specific validations
+    if (addFormState.type === 'link') {
+      const url = elements.addLinkUrl ? elements.addLinkUrl.value.trim() : '';
+      if (!url) {
+        isValid = false;
+        if (elements.linkUrlError) {
+          elements.linkUrlError.textContent = 'Please enter a resource link URL.';
+          elements.linkUrlError.style.display = 'flex';
+        }
+        if (elements.addLinkUrl) elements.addLinkUrl.classList.add('is-invalid');
+        if (!firstErrorField) firstErrorField = elements.addLinkUrl;
+      } else {
+        // Basic URL regex check
+        const urlPattern = /^(https?:\/\/)?([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}(:\d+)?(\/[^\s]*)?$/;
+        if (!urlPattern.test(url)) {
+          isValid = false;
+          if (elements.linkUrlError) {
+            elements.linkUrlError.textContent = 'Please enter a valid web URL (e.g. https://example.com/guide).';
+            elements.linkUrlError.style.display = 'flex';
+          }
+          if (elements.addLinkUrl) elements.addLinkUrl.classList.add('is-invalid');
+          if (!firstErrorField) firstErrorField = elements.addLinkUrl;
+        }
+      }
+    } else if (addFormState.type === 'note') {
+      const noteContent = elements.addNoteContent ? elements.addNoteContent.value.trim() : '';
+      if (!noteContent) {
+        isValid = false;
+        if (elements.noteContentError) {
+          elements.noteContentError.textContent = 'Please write some note content before saving.';
+          elements.noteContentError.style.display = 'flex';
+        }
+        elements.addNoteContent.closest('.note-editor-wrapper')?.classList.add('is-invalid');
+        if (!firstErrorField) firstErrorField = elements.addNoteContent;
+      }
+    }
+
+    if (!isValid && firstErrorField) {
+      firstErrorField.focus();
+    }
+
+    return isValid;
+  };
+
+  // Clear errors on typing
+  if (elements.addPageTitle) {
+    elements.addPageTitle.addEventListener('input', () => {
+      if (elements.titleError) elements.titleError.style.display = 'none';
+      elements.addPageTitle.classList.remove('is-invalid');
+    });
+  }
+
+  if (elements.addLinkUrl) {
+    elements.addLinkUrl.addEventListener('input', () => {
+      if (elements.linkUrlError) elements.linkUrlError.style.display = 'none';
+      elements.addLinkUrl.classList.remove('is-invalid');
+    });
+  }
+
+  // 9. Reset Add Form
+  const resetAddForm = () => {
+    if (elements.addPageForm) elements.addPageForm.reset();
+    addFormState.tags = [];
+    addFormState.isFavorite = false;
+    addFormState.documentFile = null;
+    addFormState.imageFile = null;
+    addFormState.imagePreviewUrl = null;
+    addFormState.videoFile = null;
+
+    renderTagChips();
+    clearValidationErrors();
+
+    if (elements.addFavoriteToggleCard) {
+      elements.addFavoriteToggleCard.classList.remove('active');
+      elements.addFavoriteToggleCard.setAttribute('aria-checked', 'false');
+    }
+
+    if (elements.documentFileInfo) elements.documentFileInfo.style.display = 'none';
+    if (elements.documentDropzone) elements.documentDropzone.style.display = 'flex';
+
+    if (elements.imagePreviewContainer) elements.imagePreviewContainer.style.display = 'none';
+    if (elements.imageDropzone) elements.imageDropzone.style.display = 'flex';
+
+    if (elements.videoFileInfo) elements.videoFileInfo.style.display = 'none';
+    if (elements.videoDropzone) elements.videoDropzone.style.display = 'flex';
+
+    if (elements.noteCharCounter) elements.noteCharCounter.textContent = '0 words, 0 characters';
+
+    setContentType('document');
+  };
+
+  // 10. Check if user entered substantial changes
+  const hasUnsavedChanges = () => {
+    const title = elements.addPageTitle ? elements.addPageTitle.value.trim() : '';
+    const desc = elements.addPageDescription ? elements.addPageDescription.value.trim() : '';
+    const note = elements.addNoteContent ? elements.addNoteContent.value.trim() : '';
+    const url = elements.addLinkUrl ? elements.addLinkUrl.value.trim() : '';
+    const hasTags = addFormState.tags.length > 0;
+    const hasFiles = addFormState.documentFile || addFormState.imageFile || addFormState.videoFile;
+
+    return Boolean(title || desc || note || url || hasTags || hasFiles);
+  };
+
+  const handleCancelAdd = () => {
+    if (hasUnsavedChanges()) {
+      if (confirm('You have unsaved changes. Are you sure you want to discard them and return to My Content?')) {
+        resetAddForm();
+        window.location.hash = 'my-content';
+      }
+    } else {
+      resetAddForm();
+      window.location.hash = 'my-content';
+    }
+  };
+
+  if (elements.cancelAddPageBtn) elements.cancelAddPageBtn.addEventListener('click', handleCancelAdd);
+  if (elements.backToMyContentBtn) elements.backToMyContentBtn.addEventListener('click', handleCancelAdd);
+
+  // 11. Form Submission (Save Content)
+  if (elements.addPageForm) {
+    elements.addPageForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+
+      if (!validateAddForm()) return;
+
+      const title = elements.addPageTitle.value.trim();
+      const type = addFormState.type;
+      const category = elements.addPageCategory.value;
+      const description = elements.addPageDescription ? elements.addPageDescription.value.trim() : '';
+      
+      let finalUrl = '';
+      if (type === 'link' && elements.addLinkUrl) {
+        let enteredUrl = elements.addLinkUrl.value.trim();
+        if (enteredUrl && !/^https?:\/\//i.test(enteredUrl)) {
+          enteredUrl = 'https://' + enteredUrl;
+        }
+        finalUrl = enteredUrl;
+      } else if (elements.addSecondaryUrl && elements.addSecondaryUrl.value.trim()) {
+        let enteredUrl = elements.addSecondaryUrl.value.trim();
+        if (!/^https?:\/\//i.test(enteredUrl)) {
+          enteredUrl = 'https://' + enteredUrl;
+        }
+        finalUrl = enteredUrl;
+      }
+
+      // If note, combine note content with description if description is empty
+      let finalDesc = description;
+      if (type === 'note' && elements.addNoteContent) {
+        const noteText = elements.addNoteContent.value.trim();
+        if (!finalDesc) {
+          finalDesc = noteText.slice(0, 160) + (noteText.length > 160 ? '...' : '');
+        }
+      }
+
+      // Visual saving feedback
+      if (elements.submitAddPageBtn) {
+        elements.submitAddPageBtn.disabled = true;
+        elements.submitAddPageBtn.innerHTML = `
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="spin-icon">
+            <circle cx="12" cy="12" r="10" stroke-dasharray="32" stroke-dashoffset="16"/>
+          </svg>
+          <span>Saving...</span>
+        `;
+      }
+
+      setTimeout(() => {
+        const newItem = window.dataStore.addItem({
+          title,
+          type,
+          category,
+          tags: [...addFormState.tags],
+          description: finalDesc,
+          url: finalUrl,
+          isFavorite: addFormState.isFavorite,
+          thumbnailUrl: addFormState.imagePreviewUrl || '',
+          fileData: addFormState.documentFile || addFormState.videoFile || null
+        });
+
+        // Reset button
+        if (elements.submitAddPageBtn) {
+          elements.submitAddPageBtn.disabled = false;
+          elements.submitAddPageBtn.innerHTML = `
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+              <polyline points="17 21 17 13 7 13 7 21"/>
+              <polyline points="7 3 7 8 15 8"/>
+            </svg>
+            <span>Save Content</span>
+          `;
+        }
+
+        resetAddForm();
+        showToast('Content saved successfully.');
+
+        // Redirect to My Content view to see newly added item
+        window.location.hash = 'my-content';
+      }, 250);
+    });
+  }
+
+  // Initialize dropzones
+  setupDocumentDropzone();
+  setupImageDropzone();
+  setupVideoDropzone();
+
+  // ==========================================================================
   // My Content View Controls (Search, Filters, Sort)
   // ==========================================================================
-  // Large Search Input
   if (elements.librarySearchInput) {
     elements.librarySearchInput.addEventListener('input', (e) => {
       state.librarySearch = e.target.value;
@@ -600,7 +1280,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Clear Search Button
   if (elements.librarySearchClearBtn) {
     elements.librarySearchClearBtn.addEventListener('click', () => {
       state.librarySearch = '';
@@ -612,7 +1291,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Type Filter Pills
   elements.libraryFilterPills.forEach(pill => {
     pill.addEventListener('click', () => {
       elements.libraryFilterPills.forEach(p => p.classList.remove('active'));
@@ -622,7 +1300,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // Sort Select Dropdown
   if (elements.librarySortSelect) {
     elements.librarySortSelect.addEventListener('change', (e) => {
       state.librarySort = e.target.value;
@@ -719,20 +1396,22 @@ document.addEventListener('DOMContentLoaded', () => {
   if (elements.sidebarBackdrop) elements.sidebarBackdrop.addEventListener('click', closeSidebar);
 
   // ==========================================================================
-  // Add & Edit Content Modal Dialog
+  // Add & Edit Content Entry Points
   // ==========================================================================
-  const openAddModal = () => {
-    if (elements.modalTitle) elements.modalTitle.textContent = 'Add New Content';
-    if (elements.modalSubmitBtn) elements.modalSubmitBtn.textContent = 'Save Content';
-    if (elements.contentEditId) elements.contentEditId.value = '';
-    if (elements.addContentForm) elements.addContentForm.reset();
+  // Navigate to Add Content Page on clicking "+ Add Content" buttons
+  if (elements.addContentBtn) {
+    elements.addContentBtn.addEventListener('click', () => {
+      window.location.hash = 'add-content';
+    });
+  }
 
-    elements.modalOverlay.classList.add('active');
-    document.body.style.overflow = 'hidden';
-    const firstInput = document.getElementById('contentTitle');
-    if (firstInput) setTimeout(() => firstInput.focus(), 50);
-  };
+  if (elements.libraryAddContentBtn) {
+    elements.libraryAddContentBtn.addEventListener('click', () => {
+      window.location.hash = 'add-content';
+    });
+  }
 
+  // Modal Editing Dialog (Used for Edit action from card dropdown)
   const openEditModal = (item) => {
     if (elements.modalTitle) elements.modalTitle.textContent = 'Edit Content';
     if (elements.modalSubmitBtn) elements.modalSubmitBtn.textContent = 'Save Changes';
@@ -758,8 +1437,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (elements.contentEditId) elements.contentEditId.value = '';
   };
 
-  if (elements.addContentBtn) elements.addContentBtn.addEventListener('click', openAddModal);
-  if (elements.libraryAddContentBtn) elements.libraryAddContentBtn.addEventListener('click', openAddModal);
   if (elements.modalCloseBtn) elements.modalCloseBtn.addEventListener('click', closeModal);
   if (elements.modalCancelBtn) elements.modalCancelBtn.addEventListener('click', closeModal);
   if (elements.modalOverlay) {
@@ -774,7 +1451,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Modal Form Submission (Handles Add and Edit)
+  // Modal Form Submission (Edit item only)
   if (elements.addContentForm) {
     elements.addContentForm.addEventListener('submit', (e) => {
       e.preventDefault();
@@ -794,7 +1471,6 @@ document.addEventListener('DOMContentLoaded', () => {
         : [];
 
       if (editId) {
-        // Edit existing item
         const updated = window.dataStore.updateItem(editId, {
           title,
           type,
@@ -805,18 +1481,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         closeModal();
         showToast(`Saved changes to "${updated.title}"`);
-      } else {
-        // Add new item
-        const newItem = window.dataStore.addItem({
-          title,
-          type,
-          category,
-          tags,
-          description,
-          url
-        });
-        closeModal();
-        showToast(`Added "${newItem.title}" to ${newItem.category}!`);
       }
     });
   }
@@ -853,7 +1517,7 @@ document.addEventListener('DOMContentLoaded', () => {
     renderCategories();
     if (state.currentView === 'my-content') {
       renderMyContent();
-    } else {
+    } else if (state.currentView === 'dashboard') {
       renderRecentContent();
     }
   });

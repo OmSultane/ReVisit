@@ -339,6 +339,262 @@
             </div>
           </section>
         </div>
+
+        <!-- VIEW 3: ADD CONTENT PAGE VIEW -->
+        <div id="addContentView" class="page-view hidden">
+          <!-- 1. Header -->
+          <section class="welcome-section" aria-label="Add Content Header">
+            <div class="welcome-text">
+              <h1 class="welcome-title">Add New Content</h1>
+              <p class="welcome-subtitle">Save something useful and keep it organized.</p>
+            </div>
+            <div class="welcome-actions">
+              <button type="button" class="btn btn-secondary" id="backToMyContentBtn">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="19" y1="12" x2="5" y2="12"></line>
+                  <polyline points="12 19 5 12 12 5"></polyline>
+                </svg>
+                <span>Back to My Content</span>
+              </button>
+            </div>
+          </section>
+
+          <!-- 2. Form Container -->
+          <section class="add-content-container" aria-label="Add Content Form Container">
+            <div class="add-content-card">
+              <!-- Content Type Selector -->
+              <div class="type-selector-wrapper">
+                <span class="type-selector-label">Choose Content Type</span>
+                <div class="type-selector" id="addTypeSelector" role="tablist" aria-label="Content Type Selector">
+                  <button type="button" class="type-selector-btn active" data-type="document" role="tab" aria-selected="true">
+                    <span class="type-selector-icon">📄</span>
+                    <span class="type-selector-text">Document</span>
+                  </button>
+                  <button type="button" class="type-selector-btn" data-type="image" role="tab" aria-selected="false">
+                    <span class="type-selector-icon">🖼️</span>
+                    <span class="type-selector-text">Image</span>
+                  </button>
+                  <button type="button" class="type-selector-btn" data-type="video" role="tab" aria-selected="false">
+                    <span class="type-selector-icon">🎥</span>
+                    <span class="type-selector-text">Video</span>
+                  </button>
+                  <button type="button" class="type-selector-btn" data-type="link" role="tab" aria-selected="false">
+                    <span class="type-selector-icon">🔗</span>
+                    <span class="type-selector-text">Link</span>
+                  </button>
+                  <button type="button" class="type-selector-btn" data-type="note" role="tab" aria-selected="false">
+                    <span class="type-selector-icon">📝</span>
+                    <span class="type-selector-text">Note</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Form Body -->
+              <form id="addPageForm" class="modal-form" style="padding:0; gap:1.5rem;" novalidate>
+                <!-- DYNAMIC TYPE-SPECIFIC FIELDS -->
+                <div id="typeSpecificSection">
+                  <!-- A. Document Upload Zone -->
+                  <div class="type-field-block" id="documentFieldBlock">
+                    <label class="form-label" style="margin-bottom:0.4rem; display:block;">Document File</label>
+                    <div class="dropzone-area" id="documentDropzone">
+                      <input type="file" id="documentFileInput" accept=".pdf,.doc,.docx,.txt,.csv,.ppt,.pptx" class="sr-only">
+                      <div class="dropzone-icon-box">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                          <polyline points="17 8 12 3 7 8"/>
+                          <line x1="12" y1="3" x2="12" y2="15"/>
+                        </svg>
+                      </div>
+                      <span class="dropzone-text">Drag & drop your file here, or <span class="dropzone-link">browse from your device</span></span>
+                      <span class="dropzone-hint">Supports PDF, Word, TXT, CSV up to 25MB</span>
+                    </div>
+                    <!-- Selected File Info -->
+                    <div class="file-selected-card" id="documentFileInfo" style="display: none;">
+                      <div class="file-selected-info">
+                        <div class="file-selected-icon">
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
+                            <polyline points="14 2 14 8 20 8"/>
+                          </svg>
+                        </div>
+                        <div class="file-selected-details">
+                          <span class="file-selected-name" id="docFileName">sample.pdf</span>
+                          <span class="file-selected-size" id="docFileSize">1.2 MB</span>
+                        </div>
+                      </div>
+                      <button type="button" class="file-remove-btn" id="docFileRemoveBtn" title="Remove file" aria-label="Remove file">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <line x1="18" y1="6" x2="6" y2="18"></line>
+                          <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- B. Image Upload Zone & Preview -->
+                  <div class="type-field-block" id="imageFieldBlock" style="display: none;">
+                    <label class="form-label" style="margin-bottom:0.4rem; display:block;">Image File</label>
+                    <div class="dropzone-area" id="imageDropzone">
+                      <input type="file" id="imageFileInput" accept="image/*" class="sr-only">
+                      <div class="dropzone-icon-box">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <rect width="18" height="18" x="3" y="3" rx="2" ry="2"/>
+                          <circle cx="9" cy="9" r="2"/>
+                          <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
+                        </svg>
+                      </div>
+                      <span class="dropzone-text">Drag & drop your image here, or <span class="dropzone-link">browse from your device</span></span>
+                      <span class="dropzone-hint">Supports PNG, JPG, WebP, SVG up to 15MB</span>
+                    </div>
+                    <!-- Image Preview -->
+                    <div class="image-preview-container" id="imagePreviewContainer" style="display: none;">
+                      <img src="" alt="Selected image preview" id="imagePreviewImg" class="image-preview-img">
+                      <button type="button" class="image-preview-remove" id="imagePreviewRemoveBtn" title="Remove image" aria-label="Remove image">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <line x1="18" y1="6" x2="6" y2="18"></line>
+                          <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- C. Video Upload Zone -->
+                  <div class="type-field-block" id="videoFieldBlock" style="display: none;">
+                    <label class="form-label" style="margin-bottom:0.4rem; display:block;">Video File</label>
+                    <div class="dropzone-area" id="videoDropzone">
+                      <input type="file" id="videoFileInput" accept="video/*" class="sr-only">
+                      <div class="dropzone-icon-box">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <polygon points="23 7 16 12 23 17 23 7"/>
+                          <rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
+                        </svg>
+                      </div>
+                      <span class="dropzone-text">Drag & drop your video here, or <span class="dropzone-link">browse from your device</span></span>
+                      <span class="dropzone-hint">Supports MP4, WebM, MKV up to 100MB</span>
+                    </div>
+                    <!-- Selected Video Info -->
+                    <div class="file-selected-card" id="videoFileInfo" style="display: none;">
+                      <div class="file-selected-info">
+                        <div class="file-selected-icon">
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polygon points="23 7 16 12 23 17 23 7"/>
+                            <rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
+                          </svg>
+                        </div>
+                        <div class="file-selected-details">
+                          <span class="file-selected-name" id="videoFileName">video.mp4</span>
+                          <span class="file-selected-size" id="videoFileSize">14.8 MB</span>
+                        </div>
+                      </div>
+                      <button type="button" class="file-remove-btn" id="videoFileRemoveBtn" title="Remove video" aria-label="Remove video">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <line x1="18" y1="6" x2="6" y2="18"></line>
+                          <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- D. Link URL Field -->
+                  <div class="type-field-block" id="linkFieldBlock" style="display: none;">
+                    <div class="form-group">
+                      <label class="form-label" for="addLinkUrl">Resource URL <span style="color:var(--accent-rose-text)">*</span></label>
+                      <input type="url" id="addLinkUrl" class="form-input" placeholder="https://example.com/useful-resource" autocomplete="off">
+                      <div class="form-error-msg" id="linkUrlError" style="display: none;"></div>
+                    </div>
+                  </div>
+
+                  <!-- E. Note Textarea Field -->
+                  <div class="type-field-block" id="noteFieldBlock" style="display: none;">
+                    <div class="form-group">
+                      <label class="form-label" for="addNoteContent">Note Content <span style="color:var(--accent-rose-text)">*</span></label>
+                      <div class="note-editor-wrapper">
+                        <textarea id="addNoteContent" class="note-editor-textarea" placeholder="Start typing your note, insights, code snippets, or key concepts here..."></textarea>
+                        <div class="note-editor-footer">
+                          <span id="noteCharCounter">0 words, 0 characters</span>
+                        </div>
+                      </div>
+                      <div class="form-error-msg" id="noteContentError" style="display: none;"></div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- COMMON FIELDS -->
+                <div class="form-row">
+                  <div class="form-group">
+                    <label class="form-label" for="addPageTitle">Title <span style="color:var(--accent-rose-text)">*</span></label>
+                    <input type="text" id="addPageTitle" class="form-input" placeholder="e.g. Java Collections Notes" required>
+                    <div class="form-error-msg" id="titleError" style="display: none;"></div>
+                  </div>
+
+                  <div class="form-group">
+                    <label class="form-label" for="addPageCategory">Category <span style="color:var(--accent-rose-text)">*</span></label>
+                    <select id="addPageCategory" class="form-select">
+                      <option value="Coding" selected>Coding</option>
+                      <option value="Study">Study</option>
+                      <option value="Career">Career</option>
+                      <option value="Projects">Projects</option>
+                      <option value="Design">Design</option>
+                      <option value="Personal">Personal</option>
+                    </select>
+                    <div class="form-error-msg" id="categoryError" style="display: none;"></div>
+                  </div>
+                </div>
+
+                <!-- Interactive Tag Input -->
+                <div class="form-group">
+                  <label class="form-label" for="addTagInput">Tags</label>
+                  <div class="tag-chip-input-wrapper" id="tagChipWrapper">
+                    <!-- Dynamic tag chips will be rendered here -->
+                    <input type="text" id="addTagInput" class="tag-text-input" placeholder="Add tags (press Enter or comma)..." autocomplete="off">
+                  </div>
+                  <span class="form-help">Type a tag and press Enter or comma (e.g. java, dsa, ui, inspiration)</span>
+                </div>
+
+                <!-- Optional URL for non-link types (like Document link or Video source) -->
+                <div class="form-group" id="secondaryUrlGroup">
+                  <label class="form-label" for="addSecondaryUrl">External Source or Reference Link (Optional)</label>
+                  <input type="url" id="addSecondaryUrl" class="form-input" placeholder="https://docs.oracle.com/en/java/">
+                </div>
+
+                <!-- Description / Notes -->
+                <div class="form-group">
+                  <label class="form-label" for="addPageDescription">Description / Notes</label>
+                  <textarea id="addPageDescription" class="form-textarea" placeholder="Brief summary, key takeaways, or contextual details..." style="min-height: 85px;"></textarea>
+                </div>
+
+                <!-- Favorite Toggle Switch -->
+                <div class="favorite-toggle-card" id="addFavoriteToggleCard" role="checkbox" aria-checked="false" tabindex="0">
+                  <div class="favorite-toggle-left">
+                    <svg class="favorite-toggle-star" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                    </svg>
+                    <div class="favorite-toggle-text">
+                      <span class="favorite-toggle-title">Add to Favorites</span>
+                      <span class="favorite-toggle-subtitle">Keep this content pinned and easily accessible in your Favorites</span>
+                    </div>
+                  </div>
+                  <div class="toggle-switch-ui">
+                    <div class="toggle-switch-knob"></div>
+                  </div>
+                </div>
+
+                <!-- Footer Actions -->
+                <div class="add-form-actions">
+                  <button type="button" class="btn btn-secondary" id="cancelAddPageBtn">Cancel</button>
+                  <button type="submit" class="btn btn-primary" id="submitAddPageBtn">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+                      <polyline points="17 21 17 13 7 13 7 21"/>
+                      <polyline points="7 3 7 8 15 8"/>
+                    </svg>
+                    <span>Save Content</span>
+                  </button>
+                </div>
+              </form>
+            </div>
+          </section>
+        </div>
       </main>
     </div>
   </div>
