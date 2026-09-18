@@ -16,16 +16,20 @@
 document.addEventListener('DOMContentLoaded', () => {
   // Application State
   const state = {
-    currentView: 'dashboard', // 'dashboard' | 'my-content' | 'add-content'
+    currentView: 'dashboard', // 'dashboard' | 'my-content' | 'add-content' | 'content-details' | 'categories' | 'favorites'
+    currentDetailsId: null,
     // Dashboard state
     dashboardSearch: '',
     dashboardCategory: 'all',
     dashboardType: 'all',
     // My Content state
     librarySearch: '',
+    libraryCategory: 'all',
     libraryType: 'all',
     librarySort: 'recent',
-    activeDropdownId: null
+    activeDropdownId: null,
+    // New Category Modal state
+    selectedCategoryIcon: 'code'
   };
 
   // Add Content Form Specific State
@@ -45,6 +49,14 @@ document.addEventListener('DOMContentLoaded', () => {
     dashboardView: document.getElementById('dashboardView'),
     myContentView: document.getElementById('myContentView'),
     addContentView: document.getElementById('addContentView'),
+    contentDetailsView: document.getElementById('contentDetailsView'),
+    contentDetailsWrapper: document.getElementById('contentDetailsWrapper'),
+    categoriesView: document.getElementById('categoriesView'),
+    categoriesPageGrid: document.getElementById('categoriesPageGrid'),
+    newCategoryBtn: document.getElementById('newCategoryBtn'),
+    favoritesView: document.getElementById('favoritesView'),
+    favoritesGrid: document.getElementById('favoritesGrid'),
+    favoritesCountBadge: document.getElementById('favoritesCountBadge'),
 
     // Topbar & Navigation
     greetingText: document.getElementById('greetingText'),
@@ -55,6 +67,8 @@ document.addEventListener('DOMContentLoaded', () => {
     navFavorites: document.getElementById('navFavorites'),
     navCategories: document.getElementById('navCategories'),
     navCountBadge: document.querySelector('#navMyContent .nav-count-badge'),
+    navFavoritesBadge: document.getElementById('navFavoritesBadge'),
+    navCategoriesBadge: document.getElementById('navCategoriesBadge'),
     mobileMenuBtn: document.getElementById('mobileMenuBtn'),
     sidebarCloseBtn: document.getElementById('sidebarCloseBtn'),
     sidebar: document.getElementById('sidebar'),
@@ -75,6 +89,11 @@ document.addEventListener('DOMContentLoaded', () => {
     libraryFilterPills: document.querySelectorAll('#libraryFilterPills .filter-pill'),
     librarySortSelect: document.getElementById('librarySortSelect'),
     libraryContentGrid: document.getElementById('libraryContentGrid'),
+    myContentCategoryBanner: document.getElementById('myContentCategoryBanner'),
+    categoryBannerIcon: document.getElementById('categoryBannerIcon'),
+    categoryBannerName: document.getElementById('categoryBannerName'),
+    categoryBannerCount: document.getElementById('categoryBannerCount'),
+    clearCategoryBannerBtn: document.getElementById('clearCategoryBannerBtn'),
 
     // Add Content Page Elements
     backToMyContentBtn: document.getElementById('backToMyContentBtn'),
@@ -129,7 +148,7 @@ document.addEventListener('DOMContentLoaded', () => {
     addPageDescription: document.getElementById('addPageDescription'),
     addFavoriteToggleCard: document.getElementById('addFavoriteToggleCard'),
 
-    // Modal Dialog Elements (Retained for quick edit)
+    // Edit Modal Dialog Elements
     modalOverlay: document.getElementById('modalOverlay'),
     modalTitle: document.getElementById('modalTitle'),
     modalCloseBtn: document.getElementById('modalCloseBtn'),
@@ -137,6 +156,28 @@ document.addEventListener('DOMContentLoaded', () => {
     modalSubmitBtn: document.getElementById('modalSubmitBtn'),
     addContentForm: document.getElementById('addContentForm'),
     contentEditId: document.getElementById('contentEditId'),
+
+    // New Category Modal Elements
+    newCategoryModal: document.getElementById('newCategoryModal'),
+    closeNewCategoryModalBtn: document.getElementById('closeNewCategoryModalBtn'),
+    cancelNewCategoryBtn: document.getElementById('cancelNewCategoryBtn'),
+    newCategoryForm: document.getElementById('newCategoryForm'),
+    categoryNameInput: document.getElementById('categoryNameInput'),
+    categoryNameError: document.getElementById('categoryNameError'),
+    iconPickerGrid: document.getElementById('iconPickerGrid'),
+    selectedCategoryIconInput: document.getElementById('selectedCategoryIcon'),
+    categoryDescInput: document.getElementById('categoryDescInput'),
+
+    // Content Details Modal Elements
+    contentDetailsModal: document.getElementById('contentDetailsModal'),
+    contentDetailsModalDialog: document.getElementById('contentDetailsModalDialog'),
+    detailsModalTypeBadge: document.getElementById('detailsModalTypeBadge'),
+    detailsModalCategoryBadge: document.getElementById('detailsModalCategoryBadge'),
+    detailsModalFavBtn: document.getElementById('detailsModalFavBtn'),
+    closeDetailsModalBtn: document.getElementById('closeDetailsModalBtn'),
+    detailsModalBody: document.getElementById('detailsModalBody'),
+    closeDetailsModalFooterBtn: document.getElementById('closeDetailsModalFooterBtn'),
+    openFullPageDetailsBtn: document.getElementById('openFullPageDetailsBtn'),
 
     // Toast Container
     toastContainer: document.getElementById('toastContainer')
@@ -164,7 +205,14 @@ document.addEventListener('DOMContentLoaded', () => {
     moreVertical: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>`,
     openIcon: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>`,
     editIcon: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>`,
-    trashIcon: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>`
+    trashIcon: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>`,
+    download: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>`,
+    maximize: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>`,
+    chevronLeft: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>`,
+    chevronRight: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>`,
+    zoomIn: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>`,
+    zoomOut: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/></svg>`,
+    copy: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="13" height="13" x="9" y="9" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`
   };
 
   const getCategoryIconSvg = (iconName) => {
@@ -205,9 +253,9 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   // ==========================================================================
-  // SPA View Routing (Dashboard, My Content, Add Content)
+  // SPA View Routing (Dashboard, My Content, Add Content, Categories, Favorites)
   // ==========================================================================
-  const switchView = (viewName) => {
+  const switchView = (viewName, itemId = null) => {
     state.currentView = viewName;
     state.activeDropdownId = null;
 
@@ -215,6 +263,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (elements.dashboardView) elements.dashboardView.classList.add('hidden');
     if (elements.myContentView) elements.myContentView.classList.add('hidden');
     if (elements.addContentView) elements.addContentView.classList.add('hidden');
+    if (elements.contentDetailsView) elements.contentDetailsView.classList.add('hidden');
+    if (elements.categoriesView) elements.categoriesView.classList.add('hidden');
+    if (elements.favoritesView) elements.favoritesView.classList.add('hidden');
 
     elements.sidebarNavLinks.forEach(link => link.classList.remove('active'));
 
@@ -231,6 +282,22 @@ document.addEventListener('DOMContentLoaded', () => {
         if (elements.addPageTitle) elements.addPageTitle.focus();
       }, 50);
       window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (viewName === 'content-details') {
+      if (elements.contentDetailsView) elements.contentDetailsView.classList.remove('hidden');
+      if (elements.navMyContent) elements.navMyContent.classList.add('active');
+      state.currentDetailsId = itemId;
+      renderContentDetails(itemId);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (viewName === 'categories') {
+      if (elements.categoriesView) elements.categoriesView.classList.remove('hidden');
+      if (elements.navCategories) elements.navCategories.classList.add('active');
+      renderCategoriesPage();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (viewName === 'favorites') {
+      if (elements.favoritesView) elements.favoritesView.classList.remove('hidden');
+      if (elements.navFavorites) elements.navFavorites.classList.add('active');
+      renderFavoritesPage();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } else {
       // Default: dashboard
       if (elements.dashboardView) elements.dashboardView.classList.remove('hidden');
@@ -240,19 +307,38 @@ document.addEventListener('DOMContentLoaded', () => {
       renderRecentContent();
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
+    updateSidebarBadges();
   };
 
   const handleRoute = () => {
-    const hash = window.location.hash.toLowerCase();
-    if (hash === '#my-content') {
+    const rawHash = window.location.hash;
+    const lowerHash = rawHash.toLowerCase();
+
+    if (lowerHash.startsWith('#content-details')) {
+      const queryPart = rawHash.split('?')[1] || '';
+      const params = new URLSearchParams(queryPart);
+      const itemId = params.get('id');
+      switchView('content-details', itemId);
+    } else if (lowerHash.startsWith('#my-content')) {
+      const queryPart = rawHash.split('?')[1] || '';
+      const params = new URLSearchParams(queryPart);
+      const catParam = params.get('category');
+      if (catParam) {
+        state.libraryCategory = catParam;
+      }
       switchView('my-content');
-    } else if (hash === '#add-content') {
+    } else if (lowerHash.startsWith('#add-content')) {
+      const queryPart = rawHash.split('?')[1] || '';
+      const params = new URLSearchParams(queryPart);
+      const catParam = params.get('category');
+      if (catParam && elements.addPageCategory) {
+        elements.addPageCategory.value = catParam;
+      }
       switchView('add-content');
-    } else if (hash === '#favorites') {
-      switchView('dashboard');
-      state.dashboardCategory = 'all';
-      renderRecentContent(true); // only favorites
-      showToast('Showing Favorited Items');
+    } else if (lowerHash === '#favorites') {
+      switchView('favorites');
+    } else if (lowerHash === '#categories') {
+      switchView('categories');
     } else {
       switchView('dashboard');
     }
@@ -262,9 +348,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Sync sidebar items count badge
   const updateSidebarBadges = () => {
-    const total = window.dataStore.getItems().length;
+    const stats = window.dataStore.getStats();
     if (elements.navCountBadge) {
-      elements.navCountBadge.textContent = total;
+      elements.navCountBadge.textContent = stats.total;
+    }
+    if (elements.navFavoritesBadge) {
+      elements.navFavoritesBadge.textContent = stats.favorites;
+    }
+    if (elements.navCategoriesBadge) {
+      elements.navCategoriesBadge.textContent = stats.categoriesCount;
     }
   };
 
@@ -335,6 +427,540 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   // ==========================================================================
+  // Utility & Helper Functions
+  // ==========================================================================
+  const escapeHtml = (str) => {
+    if (!str) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  };
+
+  const CATEGORY_ICONS = [
+    { key: 'code', emoji: '💻', label: 'Coding' },
+    { key: 'book-open', emoji: '📚', label: 'Study' },
+    { key: 'briefcase', emoji: '💼', label: 'Career' },
+    { key: 'folder-git', emoji: '🚀', label: 'Projects' },
+    { key: 'palette', emoji: '🎨', label: 'Design' },
+    { key: 'user', emoji: '👤', label: 'Personal' },
+    { key: 'zap', emoji: '⚡', label: 'Productivity' },
+    { key: 'flask', emoji: '🔬', label: 'Research' },
+    { key: 'music', emoji: '🎵', label: 'Media' },
+    { key: 'lightbulb', emoji: '💡', label: 'Ideas' },
+    { key: 'globe', emoji: '🌐', label: 'Web' },
+    { key: 'lock', emoji: '🔒', label: 'Security' }
+  ];
+
+  const getCategoryEmojiForName = (catName) => {
+    if (!catName || catName === 'all') return '📁';
+    const categories = window.dataStore.getCategories();
+    const cat = categories.find(c => 
+      c.name.toLowerCase() === catName.toLowerCase() || 
+      c.id === catName.toLowerCase()
+    );
+    if (!cat) return '📁';
+    const iconObj = CATEGORY_ICONS.find(ci => ci.key === cat.icon);
+    return iconObj ? iconObj.emoji : (cat.icon && cat.icon.length <= 2 ? cat.icon : '📁');
+  };
+
+  const populateCategoryDropdowns = (selectedCategory = null) => {
+    const categories = window.dataStore.getCategories();
+    const selects = [elements.addPageCategory, document.getElementById('contentCategory')].filter(Boolean);
+
+    selects.forEach(select => {
+      const currentVal = selectedCategory || select.value;
+      select.innerHTML = categories.map(cat => 
+        `<option value="${escapeHtml(cat.name)}" ${currentVal === cat.name ? 'selected' : ''}>${escapeHtml(cat.name)}</option>`
+      ).join('');
+    });
+  };
+
+  const renderIconPicker = () => {
+    if (!elements.iconPickerGrid) return;
+    elements.iconPickerGrid.innerHTML = CATEGORY_ICONS.map(item => `
+      <div class="icon-picker-item ${state.selectedCategoryIcon === item.key ? 'active' : ''}" data-icon-key="${item.key}" title="${item.label}">
+        <span>${item.emoji}</span>
+      </div>
+    `).join('');
+
+    elements.iconPickerGrid.querySelectorAll('.icon-picker-item').forEach(tile => {
+      tile.addEventListener('click', () => {
+        state.selectedCategoryIcon = tile.getAttribute('data-icon-key');
+        if (elements.selectedCategoryIconInput) {
+          elements.selectedCategoryIconInput.value = state.selectedCategoryIcon;
+        }
+        renderIconPicker();
+      });
+    });
+  };
+
+  const openNewCategoryModal = () => {
+    state.selectedCategoryIcon = 'code';
+    if (elements.newCategoryForm) elements.newCategoryForm.reset();
+    if (elements.categoryNameError) elements.categoryNameError.style.display = 'none';
+    if (elements.selectedCategoryIconInput) elements.selectedCategoryIconInput.value = 'code';
+    renderIconPicker();
+    if (elements.newCategoryModal) {
+      elements.newCategoryModal.classList.add('active');
+      document.body.style.overflow = 'hidden';
+      setTimeout(() => {
+        if (elements.categoryNameInput) elements.categoryNameInput.focus();
+      }, 50);
+    }
+  };
+
+  const closeNewCategoryModal = () => {
+    if (elements.newCategoryModal) {
+      elements.newCategoryModal.classList.remove('active');
+      document.body.style.overflow = '';
+    }
+    if (elements.newCategoryForm) elements.newCategoryForm.reset();
+    if (elements.categoryNameError) elements.categoryNameError.style.display = 'none';
+  };
+
+  // Wire up New Category Modal events
+  if (elements.newCategoryBtn) elements.newCategoryBtn.addEventListener('click', openNewCategoryModal);
+  if (elements.closeNewCategoryModalBtn) elements.closeNewCategoryModalBtn.addEventListener('click', closeNewCategoryModal);
+  if (elements.cancelNewCategoryBtn) elements.cancelNewCategoryBtn.addEventListener('click', closeNewCategoryModal);
+  if (elements.newCategoryModal) {
+    elements.newCategoryModal.addEventListener('click', (e) => {
+      if (e.target === elements.newCategoryModal) closeNewCategoryModal();
+    });
+  }
+
+  if (elements.newCategoryForm) {
+    elements.newCategoryForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const name = elements.categoryNameInput ? elements.categoryNameInput.value.trim() : '';
+      const desc = elements.categoryDescInput ? elements.categoryDescInput.value.trim() : '';
+      const iconKey = state.selectedCategoryIcon || 'code';
+
+      if (!name) {
+        if (elements.categoryNameError) {
+          elements.categoryNameError.textContent = 'Category name is required.';
+          elements.categoryNameError.style.display = 'block';
+        }
+        if (elements.categoryNameInput) elements.categoryNameInput.focus();
+        return;
+      }
+
+      // Check duplicates
+      const existing = window.dataStore.getCategories();
+      const isDup = existing.some(c => c.name.toLowerCase() === name.toLowerCase());
+      if (isDup) {
+        if (elements.categoryNameError) {
+          elements.categoryNameError.textContent = `A category named "${name}" already exists.`;
+          elements.categoryNameError.style.display = 'block';
+        }
+        if (elements.categoryNameInput) elements.categoryNameInput.focus();
+        return;
+      }
+
+      try {
+        const newCat = window.dataStore.addCategory({
+          name,
+          icon: iconKey,
+          description: desc
+        });
+        closeNewCategoryModal();
+        populateCategoryDropdowns(newCat.name);
+        showToast(`Category "${newCat.name}" created!`);
+        if (state.currentView === 'categories') {
+          renderCategoriesPage();
+        }
+      } catch (err) {
+        if (elements.categoryNameError) {
+          elements.categoryNameError.textContent = err.message;
+          elements.categoryNameError.style.display = 'block';
+        }
+      }
+    });
+  }
+
+  // Clear Category Filter Banner Button in My Content
+  if (elements.clearCategoryBannerBtn) {
+    elements.clearCategoryBannerBtn.addEventListener('click', () => {
+      state.libraryCategory = 'all';
+      if (elements.myContentCategoryBanner) elements.myContentCategoryBanner.classList.add('hidden');
+      window.location.hash = 'my-content';
+      renderMyContent();
+    });
+  }
+
+  const navigateToCategoryLibrary = (catName) => {
+    state.libraryCategory = catName;
+    window.location.hash = `my-content?category=${encodeURIComponent(catName)}`;
+  };
+
+  // Content Details Modal Open / Close
+  const openDetailsModal = (itemId) => {
+    const item = window.dataStore.getItem(itemId);
+    if (!item || !elements.contentDetailsModal) return;
+
+    state.currentDetailsId = itemId;
+
+    // Badges & Actions
+    if (elements.detailsModalTypeBadge) {
+      elements.detailsModalTypeBadge.className = `type-badge ${item.type}`;
+      elements.detailsModalTypeBadge.innerHTML = `${ICONS[item.type] || ICONS.document} ${item.resourceType || item.type}`;
+    }
+
+    if (elements.detailsModalCategoryBadge) {
+      elements.detailsModalCategoryBadge.textContent = item.category;
+    }
+
+    if (elements.detailsModalFavBtn) {
+      elements.detailsModalFavBtn.classList.toggle('active', Boolean(item.isFavorite));
+      elements.detailsModalFavBtn.onclick = (e) => {
+        e.stopPropagation();
+        const updated = window.dataStore.toggleFavorite(item.id);
+        if (updated) {
+          elements.detailsModalFavBtn.classList.toggle('active', updated.isFavorite);
+          showToast(updated.isFavorite ? 'Added to Favorites' : 'Removed from Favorites');
+        }
+      };
+    }
+
+    const isExternal = item.storageType === 'external' || item.type === 'link' || item.type === 'video' || (item.url && item.type !== 'document');
+
+    const tagsHtml = item.tags && item.tags.length > 0
+      ? item.tags.map(tag => `<span class="tag-pill">#${escapeHtml(tag)}</span>`).join('')
+      : '<span style="color:var(--text-muted); font-size:var(--text-xs); font-style:italic;">No tags</span>';
+
+    elements.detailsModalBody.innerHTML = `
+      <div>
+        <h2 class="details-modal-title">${escapeHtml(item.title)}</h2>
+      </div>
+
+      <div class="details-meta-bar">
+        <div class="details-meta-item">
+          ${ICONS.clock}
+          <span>Saved: ${item.dateDisplay || 'Recently'}</span>
+        </div>
+        <div class="details-meta-item">
+          <span>${isExternal ? '🌐 External Resource' : '💾 Stored Content'}</span>
+        </div>
+        ${item.platform ? `
+          <div class="details-meta-item">
+            <span>📺 ${escapeHtml(item.platform)}</span>
+          </div>
+        ` : ''}
+      </div>
+
+      ${item.thumbnailUrl ? `
+        <div style="width: 100%; max-height: 220px; overflow: hidden; border-radius: var(--radius-lg); border: 1px solid var(--border-default); background: var(--gray-100);">
+          <img src="${item.thumbnailUrl}" alt="${escapeHtml(item.title)}" style="width: 100%; height: 200px; object-fit: cover;">
+        </div>
+      ` : ''}
+
+      ${isExternal && item.url ? `
+        <div class="details-resource-banner">
+          <div class="details-resource-left">
+            <span style="font-size: 1.4rem;">🔗</span>
+            <div>
+              <div style="font-weight: 600; font-size: var(--text-xs); color: var(--text-secondary);">Source URL</div>
+              <a href="${item.url}" target="_blank" rel="noopener noreferrer" class="details-resource-url">${escapeHtml(item.url)}</a>
+            </div>
+          </div>
+          <a href="${item.url}" target="_blank" rel="noopener noreferrer" class="btn btn-primary" style="padding: 0.45rem 0.85rem; font-size: var(--text-xs);">
+            <span>Open Link ↗</span>
+          </a>
+        </div>
+      ` : ''}
+
+      ${item.fileData ? `
+        <div class="details-file-attachment">
+          <div style="display: flex; align-items: center; gap: 0.6rem;">
+            <span style="font-size: 1.3rem;">📎</span>
+            <div>
+              <div style="font-weight: 600; font-size: var(--text-sm);">${escapeHtml(item.fileData.name)}</div>
+              <div style="font-size: var(--text-xs); color: var(--text-muted);">${formatBytes(item.fileData.size)}</div>
+            </div>
+          </div>
+          <button type="button" class="btn btn-secondary" data-action="download-attachment" style="padding: 0.35rem 0.75rem; font-size: var(--text-xs);">
+            ${ICONS.download}
+            <span>Download</span>
+          </button>
+        </div>
+      ` : ''}
+
+      <div>
+        <div style="font-size: var(--text-xs); font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.4rem; letter-spacing: 0.04em;">Description & Notes</div>
+        <div class="details-content-box">${escapeHtml(item.noteBody || item.description || 'No additional notes provided.')}</div>
+      </div>
+
+      <div>
+        <div style="font-size: var(--text-xs); font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.4rem; letter-spacing: 0.04em;">Tags</div>
+        <div class="details-tags-row">${tagsHtml}</div>
+      </div>
+    `;
+
+    const downloadBtn = elements.detailsModalBody.querySelector('[data-action="download-attachment"]');
+    if (downloadBtn) {
+      downloadBtn.addEventListener('click', () => {
+        showToast(`Preparing download for "${item.fileData ? item.fileData.name : item.title}"...`);
+      });
+    }
+
+    if (elements.openFullPageDetailsBtn) {
+      elements.openFullPageDetailsBtn.onclick = () => {
+        closeDetailsModal();
+        window.location.hash = `content-details?id=${item.id}`;
+      };
+    }
+
+    elements.contentDetailsModal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+  };
+
+  const closeDetailsModal = () => {
+    if (elements.contentDetailsModal) {
+      elements.contentDetailsModal.classList.remove('active');
+      document.body.style.overflow = '';
+    }
+  };
+
+  if (elements.closeDetailsModalBtn) elements.closeDetailsModalBtn.addEventListener('click', closeDetailsModal);
+  if (elements.closeDetailsModalFooterBtn) elements.closeDetailsModalFooterBtn.addEventListener('click', closeDetailsModal);
+  if (elements.contentDetailsModal) {
+    elements.contentDetailsModal.addEventListener('click', (e) => {
+      if (e.target === elements.contentDetailsModal) closeDetailsModal();
+    });
+  }
+
+  // ==========================================================================
+  // Unified Content Card Markup & Event Handler
+  // ==========================================================================
+  const createContentCardHtml = (item, viewContext = 'library') => {
+    const typeIcon = ICONS[item.type] || ICONS.document;
+    const isFav = item.isFavorite;
+    const isExternal = item.storageType === 'external' || item.type === 'link' || item.type === 'video' || (item.url && item.type !== 'document');
+    const isDropdownActive = state.activeDropdownId === item.id;
+
+    const tagsHtml = item.tags && item.tags.length > 0 
+      ? item.tags.map(tag => `<span class="tag-pill">#${escapeHtml(tag)}</span>`).join('') 
+      : '';
+
+    return `
+      <article class="content-card" data-item-id="${item.id}" style="cursor:pointer;">
+        <div class="card-top">
+          <div style="display:flex; align-items:center; gap:0.4rem; flex-wrap:wrap;">
+            <span class="type-badge ${item.type}">
+              ${typeIcon}
+              ${escapeHtml(item.resourceType || item.type)}
+            </span>
+            ${isExternal ? `
+              <span class="storage-badge external" style="font-size:0.6rem; padding:0.15rem 0.45rem;">External</span>
+            ` : `
+              <span class="storage-badge stored" style="font-size:0.6rem; padding:0.15rem 0.45rem;">Stored</span>
+            `}
+          </div>
+          <div class="card-actions">
+            <button class="fav-btn ${isFav ? 'active' : ''}" data-action="toggle-fav" data-id="${item.id}" title="${isFav ? 'Remove from favorites' : 'Add to favorites'}" aria-label="Favorite">
+              ${ICONS.star}
+            </button>
+
+            <div class="card-menu-wrapper">
+              <button class="card-menu-btn ${isDropdownActive ? 'active' : ''}" data-action="open-menu" data-id="${item.id}" title="Card actions" aria-label="More options">
+                ${ICONS.moreVertical}
+              </button>
+              <div class="card-dropdown ${isDropdownActive ? 'active' : ''}" id="menu-${viewContext}-${item.id}">
+                <button class="dropdown-item" data-action="open-item" data-id="${item.id}">
+                  ${ICONS.openIcon}
+                  <span>Open Details</span>
+                </button>
+                <button class="dropdown-item" data-action="edit-item" data-id="${item.id}">
+                  ${ICONS.editIcon}
+                  <span>Edit</span>
+                </button>
+                ${isExternal && item.url ? `
+                  <button class="dropdown-item" data-action="open-ext-item" data-url="${escapeHtml(item.url)}">
+                    ${ICONS.externalLink}
+                    <span>Open Link ↗</span>
+                  </button>
+                ` : `
+                  <button class="dropdown-item" data-action="download-item" data-id="${item.id}">
+                    ${ICONS.download}
+                    <span>Download</span>
+                  </button>
+                `}
+                <button class="dropdown-item danger" data-action="delete-item" data-id="${item.id}">
+                  ${ICONS.trashIcon}
+                  <span>Delete</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-body">
+          <h3 class="card-title" data-action="open-item" data-id="${item.id}" title="${escapeHtml(item.title)}">${escapeHtml(item.title)}</h3>
+          <span class="card-category-tag" data-action="filter-cat" data-cat="${escapeHtml(item.category)}">${escapeHtml(item.category)}</span>
+          ${item.thumbnailUrl ? `
+            <div style="width:100%; max-height:160px; overflow:hidden; border-radius:var(--radius-md); margin-top:0.35rem; background:var(--gray-100); border:1px solid var(--border-default);">
+              <img src="${item.thumbnailUrl}" alt="${escapeHtml(item.title)}" style="width:100%; height:140px; object-fit:cover;">
+            </div>
+          ` : ''}
+          ${item.fileData ? `
+            <div style="display:inline-flex; align-items:center; gap:0.35rem; font-size:0.7rem; color:var(--text-muted); background:var(--gray-50); border:1px solid var(--border-default); padding:0.15rem 0.45rem; border-radius:var(--radius-sm); margin-top:0.25rem;">
+              <span>📎 ${escapeHtml(item.fileData.name)}</span>
+              <span>(${formatBytes(item.fileData.size)})</span>
+            </div>
+          ` : ''}
+          ${item.description ? `<p class="text-xs text-muted" style="line-height:1.4; margin-top:2px;">${escapeHtml(item.description)}</p>` : ''}
+          ${tagsHtml ? `<div class="card-tags">${tagsHtml}</div>` : ''}
+        </div>
+
+        <div class="card-footer">
+          <div class="card-date">
+            ${ICONS.clock}
+            <span>${item.dateDisplay || 'Today'}</span>
+          </div>
+          <span class="card-details-link" data-action="open-item" data-id="${item.id}" style="font-size:var(--text-xs); color:var(--primary-600); font-weight:600;">View Details →</span>
+        </div>
+      </article>
+    `;
+  };
+
+  const attachCardEvents = (container, viewContext = 'library') => {
+    // 1. Favorite toggle
+    container.querySelectorAll('[data-action="toggle-fav"]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const id = btn.getAttribute('data-id');
+        if (viewContext === 'favorites') {
+          const card = btn.closest('.content-card');
+          if (card) {
+            card.style.transition = 'all 0.22s ease';
+            card.style.opacity = '0';
+            card.style.transform = 'scale(0.92)';
+          }
+          setTimeout(() => {
+            window.dataStore.toggleFavorite(id);
+            showToast('Removed from Favorites');
+          }, 220);
+        } else {
+          const updated = window.dataStore.toggleFavorite(id);
+          if (updated) {
+            btn.classList.toggle('active', updated.isFavorite);
+            showToast(updated.isFavorite ? `Added "${updated.title}" to Favorites` : `Removed from Favorites`);
+          }
+        }
+      });
+    });
+
+    // 2. Three-dot menu toggle
+    container.querySelectorAll('[data-action="open-menu"]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const id = btn.getAttribute('data-id');
+        state.activeDropdownId = state.activeDropdownId === id ? null : id;
+        if (viewContext === 'library') {
+          renderMyContent();
+        } else if (viewContext === 'favorites') {
+          renderFavoritesPage();
+        } else {
+          renderRecentContent();
+        }
+      });
+    });
+
+    // 3. Open Details Modal action
+    container.querySelectorAll('[data-action="open-item"]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const id = btn.getAttribute('data-id');
+        state.activeDropdownId = null;
+        openDetailsModal(id);
+      });
+    });
+
+    // 3b. Open External Link action
+    container.querySelectorAll('[data-action="open-ext-item"]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const url = btn.getAttribute('data-url');
+        state.activeDropdownId = null;
+        if (url) window.open(url, '_blank');
+      });
+    });
+
+    // 3c. Download action
+    container.querySelectorAll('[data-action="download-item"]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const id = btn.getAttribute('data-id');
+        const item = window.dataStore.getItem(id);
+        state.activeDropdownId = null;
+        showToast(`Preparing download for "${item ? item.title : 'file'}"...`);
+      });
+    });
+
+    // 4. Edit action
+    container.querySelectorAll('[data-action="edit-item"]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const id = btn.getAttribute('data-id');
+        const item = window.dataStore.getItem(id);
+        state.activeDropdownId = null;
+        if (item) {
+          openEditModal(item);
+        }
+      });
+    });
+
+    // 5. Delete action
+    container.querySelectorAll('[data-action="delete-item"]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const id = btn.getAttribute('data-id');
+        state.activeDropdownId = null;
+        const item = window.dataStore.getItem(id);
+        if (item && confirm(`Are you sure you want to delete "${item.title}"?`)) {
+          const deleted = window.dataStore.deleteItem(id);
+          if (deleted) {
+            showToast(`Deleted "${deleted.title}"`);
+          }
+        }
+      });
+    });
+
+    // 6. Category Tag Filter
+    container.querySelectorAll('[data-action="filter-cat"]').forEach(tag => {
+      tag.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const cat = tag.getAttribute('data-cat');
+        navigateToCategoryLibrary(cat);
+      });
+    });
+
+    // 7. Clicking anywhere on the card opens Details Modal
+    container.querySelectorAll('.content-card').forEach(card => {
+      card.addEventListener('click', (e) => {
+        if (e.target.closest('[data-action]') || e.target.closest('.card-menu-wrapper') || e.target.closest('a')) return;
+        const id = card.getAttribute('data-item-id');
+        openDetailsModal(id);
+      });
+    });
+  };
+
+  // Close dropdowns on outside click
+  document.addEventListener('click', (e) => {
+    if (state.activeDropdownId && !e.target.closest('.card-menu-wrapper')) {
+      state.activeDropdownId = null;
+      document.querySelectorAll('.card-dropdown.active').forEach(dropdown => {
+        dropdown.classList.remove('active');
+      });
+      document.querySelectorAll('.card-menu-btn.active').forEach(btn => {
+        btn.classList.remove('active');
+      });
+    }
+  });
+
+  // ==========================================================================
   // Render Categories Section (Dashboard)
   // ==========================================================================
   const renderCategories = () => {
@@ -344,12 +970,12 @@ document.addEventListener('DOMContentLoaded', () => {
     elements.categoriesContainer.innerHTML = categories.map(cat => {
       const isActive = state.dashboardCategory === cat.slug;
       return `
-        <div class="category-card ${cat.accentClass} ${isActive ? 'active' : ''}" data-category-slug="${cat.slug}" role="button" tabindex="0" title="Filter by ${cat.name}">
+        <div class="category-card ${cat.accentClass} ${isActive ? 'active' : ''}" data-category-slug="${cat.slug}" role="button" tabindex="0" title="Filter by ${escapeHtml(cat.name)}">
           <div class="category-icon-box ${cat.accentClass}">
             ${getCategoryIconSvg(cat.icon)}
           </div>
           <div class="category-info">
-            <span class="category-name">${cat.name}</span>
+            <span class="category-name">${escapeHtml(cat.name)}</span>
             <span class="category-count">${cat.count} ${cat.count === 1 ? 'item' : 'items'}</span>
           </div>
         </div>
@@ -364,6 +990,124 @@ document.addEventListener('DOMContentLoaded', () => {
         renderRecentContent();
       });
     });
+  };
+
+  // ==========================================================================
+  // Render Categories Dedicated Page (#categories)
+  // ==========================================================================
+  const renderCategoriesPage = () => {
+    if (!elements.categoriesPageGrid) return;
+    const categories = window.dataStore.getCategories();
+
+    elements.categoriesPageGrid.innerHTML = categories.map(cat => {
+      const emoji = getCategoryEmojiForName(cat.name);
+      const accentPalettes = ['cat-coding', 'cat-study', 'cat-career', 'cat-projects', 'cat-design', 'cat-personal'];
+      const accentClass = cat.accentClass || accentPalettes[0];
+      const previewList = cat.recentPreviews && cat.recentPreviews.length > 0
+        ? cat.recentPreviews.map(p => {
+            const iconMini = p.type === 'document' ? '📄' : (p.type === 'image' ? '🖼️' : (p.type === 'video' ? '🎥' : (p.type === 'link' ? '🔗' : '📝')));
+            return `
+              <div class="category-preview-item" data-action="open-item" data-id="${p.id}" title="Click to open ${escapeHtml(p.title)}">
+                <div class="category-preview-item-left">
+                  <span>${iconMini}</span>
+                  <span class="category-preview-title">${escapeHtml(p.title)}</span>
+                </div>
+                <span class="category-preview-date">${p.dateDisplay || 'Saved'}</span>
+              </div>
+            `;
+          }).join('')
+        : `<span class="category-preview-empty">No items saved yet in this category</span>`;
+
+      return `
+        <article class="category-page-card" data-category-name="${escapeHtml(cat.name)}" role="button" tabindex="0">
+          <div class="category-card-header">
+            <div class="category-icon-box ${accentClass}">
+              <span>${emoji}</span>
+            </div>
+            <span class="category-count-pill">${cat.count} ${cat.count === 1 ? 'item' : 'items'}</span>
+          </div>
+
+          <div class="category-card-meta">
+            <h3 class="category-card-title">${escapeHtml(cat.name)}</h3>
+            <p class="category-card-desc">${escapeHtml(cat.description || `Saved resources in ${cat.name}`)}</p>
+          </div>
+
+          <div class="category-preview-section">
+            <span class="category-preview-label">Recent Items</span>
+            <div class="category-previews-list">
+              ${previewList}
+            </div>
+          </div>
+
+          <div class="category-card-footer">
+            <button type="button" class="category-view-btn" data-action="view-category" data-cat="${escapeHtml(cat.name)}">
+              <span>View Category</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+                <polyline points="12 5 19 12 12 19"></polyline>
+              </svg>
+            </button>
+          </div>
+        </article>
+      `;
+    }).join('');
+
+    elements.categoriesPageGrid.querySelectorAll('.category-page-card').forEach(card => {
+      card.addEventListener('click', (e) => {
+        // If clicking on preview item, open details modal
+        const previewItem = e.target.closest('[data-action="open-item"]');
+        if (previewItem) {
+          e.stopPropagation();
+          const itemId = previewItem.getAttribute('data-id');
+          openDetailsModal(itemId);
+          return;
+        }
+
+        const catName = card.getAttribute('data-category-name');
+        navigateToCategoryLibrary(catName);
+      });
+    });
+  };
+
+  // ==========================================================================
+  // Render Favorites Dedicated Page (#favorites)
+  // ==========================================================================
+  const renderFavoritesPage = () => {
+    if (!elements.favoritesGrid) return;
+    const favorites = window.dataStore.getFavorites();
+
+    if (elements.favoritesCountBadge) {
+      elements.favoritesCountBadge.textContent = `${favorites.length} saved`;
+    }
+
+    if (favorites.length === 0) {
+      elements.favoritesGrid.innerHTML = `
+        <div class="empty-state" style="grid-column: 1 / -1;">
+          <div class="empty-icon-wrap" style="background-color: #FEF3C7; color: #D97706;">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+            </svg>
+          </div>
+          <h4 class="empty-title">Nothing saved here yet</h4>
+          <p class="empty-desc">Star your most important documents, videos, and notes to find them quickly.</p>
+          <button class="btn btn-secondary" id="browseMyContentFromFavBtn">
+            <span>Browse My Content</span>
+          </button>
+        </div>
+      `;
+
+      const browseBtn = document.getElementById('browseMyContentFromFavBtn');
+      if (browseBtn) {
+        browseBtn.addEventListener('click', () => {
+          state.libraryCategory = 'all';
+          window.location.hash = 'my-content';
+        });
+      }
+      return;
+    }
+
+    elements.favoritesGrid.innerHTML = favorites.map(item => createContentCardHtml(item, 'favorites')).join('');
+    attachCardEvents(elements.favoritesGrid, 'favorites');
   };
 
   // ==========================================================================
@@ -385,7 +1129,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (items.length === 0) {
       elements.contentGrid.innerHTML = `
-        <div class="empty-state">
+        <div class="empty-state" style="grid-column: 1 / -1;">
           <div class="empty-icon-wrap">
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
               <circle cx="11" cy="11" r="8"></circle>
@@ -413,71 +1157,8 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    elements.contentGrid.innerHTML = items.map(item => {
-      const typeIcon = ICONS[item.type] || ICONS.document;
-      const isFav = item.isFavorite;
-
-      const tagsHtml = item.tags && item.tags.length > 0 
-        ? item.tags.map(tag => `<span class="tag-pill">#${tag}</span>`).join('') 
-        : '';
-
-      return `
-        <article class="content-card" data-item-id="${item.id}">
-          <div class="card-top">
-            <span class="type-badge ${item.type}">
-              ${typeIcon}
-              ${item.type}
-            </span>
-            <div class="card-actions">
-              <button class="fav-btn ${isFav ? 'active' : ''}" data-action="toggle-fav" data-id="${item.id}" title="${isFav ? 'Remove from favorites' : 'Add to favorites'}" aria-label="Favorite">
-                ${ICONS.star}
-              </button>
-            </div>
-          </div>
-
-          <div class="card-body">
-            <h3 class="card-title" title="${item.title}">${item.title}</h3>
-            <span class="card-category-tag">${item.category}</span>
-            ${item.thumbnailUrl ? `
-              <div style="width:100%; max-height:160px; overflow:hidden; border-radius:var(--radius-md); margin-top:0.35rem; background:var(--gray-100); border:1px solid var(--border-default);">
-                <img src="${item.thumbnailUrl}" alt="${item.title}" style="width:100%; height:140px; object-fit:cover;">
-              </div>
-            ` : ''}
-            ${item.fileData ? `
-              <div style="display:inline-flex; align-items:center; gap:0.35rem; font-size:0.7rem; color:var(--text-muted); background:var(--gray-50); border:1px solid var(--border-default); padding:0.15rem 0.45rem; border-radius:var(--radius-sm); margin-top:0.25rem;">
-                <span>📎 ${item.fileData.name}</span>
-                <span>(${formatBytes(item.fileData.size)})</span>
-              </div>
-            ` : ''}
-            ${item.description ? `<p class="text-xs text-muted" style="line-height:1.4; margin-top:2px;">${item.description}</p>` : ''}
-            ${tagsHtml ? `<div class="card-tags">${tagsHtml}</div>` : ''}
-          </div>
-
-          <div class="card-footer">
-            <div class="card-date">
-              ${ICONS.clock}
-              <span>${item.dateDisplay}</span>
-            </div>
-            ${item.url ? `
-              <a href="${item.url}" target="_blank" rel="noopener noreferrer" class="btn-icon-only" title="Open Link" style="display:inline-flex; align-items:center; color:var(--primary-600);">
-                ${ICONS.externalLink}
-              </a>
-            ` : ''}
-          </div>
-        </article>
-      `;
-    }).join('');
-
-    elements.contentGrid.querySelectorAll('[data-action="toggle-fav"]').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const id = btn.getAttribute('data-id');
-        const updated = window.dataStore.toggleFavorite(id);
-        if (updated) {
-          showToast(updated.isFavorite ? `Added "${updated.title}" to Favorites` : `Removed from Favorites`);
-        }
-      });
-    });
+    elements.contentGrid.innerHTML = items.map(item => createContentCardHtml(item, 'dashboard')).join('');
+    attachCardEvents(elements.contentGrid, 'dashboard');
   };
 
   // ==========================================================================
@@ -488,6 +1169,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const items = window.dataStore.filterItems({
       search: state.librarySearch,
+      category: state.libraryCategory,
       type: state.libraryType,
       sort: state.librarySort
     });
@@ -496,9 +1178,57 @@ document.addEventListener('DOMContentLoaded', () => {
       elements.librarySearchClearBtn.classList.toggle('active', state.librarySearch.trim().length > 0);
     }
 
+    // Handle Active Category Banner
+    if (elements.myContentCategoryBanner) {
+      if (state.libraryCategory && state.libraryCategory !== 'all') {
+        elements.myContentCategoryBanner.classList.remove('hidden');
+        if (elements.categoryBannerName) elements.categoryBannerName.textContent = state.libraryCategory;
+        if (elements.categoryBannerCount) elements.categoryBannerCount.textContent = `(${items.length} ${items.length === 1 ? 'item' : 'items'})`;
+        if (elements.categoryBannerIcon) elements.categoryBannerIcon.textContent = getCategoryEmojiForName(state.libraryCategory);
+      } else {
+        elements.myContentCategoryBanner.classList.add('hidden');
+      }
+    }
+
     if (items.length === 0) {
+      // Check if this is an empty category
+      if (state.libraryCategory && state.libraryCategory !== 'all') {
+        elements.libraryContentGrid.innerHTML = `
+          <div class="empty-state" style="grid-column: 1 / -1;">
+            <div class="empty-icon-wrap" style="background-color: var(--primary-50); color: var(--primary-600);">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/>
+                <line x1="12" y1="10" x2="12" y2="16"/>
+                <line x1="9" y1="13" x2="15" y2="13"/>
+              </svg>
+            </div>
+            <h4 class="empty-title">No content in this category yet</h4>
+            <p class="empty-desc">Start saving something to build your collection.</p>
+            <button class="btn btn-primary" id="emptyCategoryAddBtn">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+              <span>+ Add Content</span>
+            </button>
+          </div>
+        `;
+
+        const emptyAddBtn = document.getElementById('emptyCategoryAddBtn');
+        if (emptyAddBtn) {
+          emptyAddBtn.addEventListener('click', () => {
+            if (elements.addPageCategory) {
+              elements.addPageCategory.value = state.libraryCategory;
+            }
+            window.location.hash = `add-content?category=${encodeURIComponent(state.libraryCategory)}`;
+          });
+        }
+        return;
+      }
+
+      // Default empty state
       elements.libraryContentGrid.innerHTML = `
-        <div class="empty-state">
+        <div class="empty-state" style="grid-column: 1 / -1;">
           <div class="empty-icon-wrap">
             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
               <path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/>
@@ -515,6 +1245,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (clearBtn) {
         clearBtn.addEventListener('click', () => {
           state.librarySearch = '';
+          state.libraryCategory = 'all';
           state.libraryType = 'all';
           state.librarySort = 'recent';
           if (elements.librarySearchInput) elements.librarySearchInput.value = '';
@@ -526,166 +1257,9 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    elements.libraryContentGrid.innerHTML = items.map(item => {
-      const typeIcon = ICONS[item.type] || ICONS.document;
-      const isFav = item.isFavorite;
-      const isDropdownActive = state.activeDropdownId === item.id;
-
-      const tagsHtml = item.tags && item.tags.length > 0 
-        ? item.tags.map(tag => `<span class="tag-pill">#${tag}</span>`).join('') 
-        : '';
-
-      return `
-        <article class="content-card" data-item-id="${item.id}">
-          <div class="card-top">
-            <span class="type-badge ${item.type}">
-              ${typeIcon}
-              ${item.type}
-            </span>
-            <div class="card-actions">
-              <button class="fav-btn ${isFav ? 'active' : ''}" data-action="toggle-fav" data-id="${item.id}" title="${isFav ? 'Remove from favorites' : 'Add to favorites'}" aria-label="Favorite">
-                ${ICONS.star}
-              </button>
-
-              <div class="card-menu-wrapper">
-                <button class="card-menu-btn ${isDropdownActive ? 'active' : ''}" data-action="open-menu" data-id="${item.id}" title="Card actions" aria-label="More options">
-                  ${ICONS.moreVertical}
-                </button>
-                <div class="card-dropdown ${isDropdownActive ? 'active' : ''}" id="menu-${item.id}">
-                  <button class="dropdown-item" data-action="open-item" data-id="${item.id}">
-                    ${ICONS.openIcon}
-                    <span>Open</span>
-                  </button>
-                  <button class="dropdown-item" data-action="edit-item" data-id="${item.id}">
-                    ${ICONS.editIcon}
-                    <span>Edit</span>
-                  </button>
-                  <button class="dropdown-item danger" data-action="delete-item" data-id="${item.id}">
-                    ${ICONS.trashIcon}
-                    <span>Delete</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="card-body">
-            <h3 class="card-title" title="${item.title}">${item.title}</h3>
-            <span class="card-category-tag">${item.category}</span>
-            ${item.thumbnailUrl ? `
-              <div style="width:100%; max-height:160px; overflow:hidden; border-radius:var(--radius-md); margin-top:0.35rem; background:var(--gray-100); border:1px solid var(--border-default);">
-                <img src="${item.thumbnailUrl}" alt="${item.title}" style="width:100%; height:140px; object-fit:cover;">
-              </div>
-            ` : ''}
-            ${item.fileData ? `
-              <div style="display:inline-flex; align-items:center; gap:0.35rem; font-size:0.7rem; color:var(--text-muted); background:var(--gray-50); border:1px solid var(--border-default); padding:0.15rem 0.45rem; border-radius:var(--radius-sm); margin-top:0.25rem;">
-                <span>📎 ${item.fileData.name}</span>
-                <span>(${formatBytes(item.fileData.size)})</span>
-              </div>
-            ` : ''}
-            ${item.description ? `<p class="text-xs text-muted" style="line-height:1.4; margin-top:2px;">${item.description}</p>` : ''}
-            ${tagsHtml ? `<div class="card-tags">${tagsHtml}</div>` : ''}
-          </div>
-
-          <div class="card-footer">
-            <div class="card-date">
-              ${ICONS.clock}
-              <span>${item.dateDisplay || 'Today'}</span>
-            </div>
-            ${item.url ? `
-              <a href="${item.url}" target="_blank" rel="noopener noreferrer" class="btn-icon-only" title="Open Link" style="display:inline-flex; align-items:center; color:var(--primary-600);">
-                ${ICONS.externalLink}
-              </a>
-            ` : ''}
-          </div>
-        </article>
-      `;
-    }).join('');
-
-    attachLibraryCardEvents();
+    elements.libraryContentGrid.innerHTML = items.map(item => createContentCardHtml(item, 'library')).join('');
+    attachCardEvents(elements.libraryContentGrid, 'library');
   };
-
-  const attachLibraryCardEvents = () => {
-    // 1. Favorite toggle
-    elements.libraryContentGrid.querySelectorAll('[data-action="toggle-fav"]').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const id = btn.getAttribute('data-id');
-        const updated = window.dataStore.toggleFavorite(id);
-        if (updated) {
-          showToast(updated.isFavorite ? `Added "${updated.title}" to Favorites` : `Removed from Favorites`);
-        }
-      });
-    });
-
-    // 2. Three-dot menu toggle
-    elements.libraryContentGrid.querySelectorAll('[data-action="open-menu"]').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const id = btn.getAttribute('data-id');
-        state.activeDropdownId = state.activeDropdownId === id ? null : id;
-        renderMyContent();
-      });
-    });
-
-    // 3. Open action
-    elements.libraryContentGrid.querySelectorAll('[data-action="open-item"]').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const id = btn.getAttribute('data-id');
-        const item = window.dataStore.getItem(id);
-        state.activeDropdownId = null;
-        if (item) {
-          if (item.url) {
-            window.open(item.url, '_blank');
-          } else {
-            showToast(`Opened "${item.title}"`);
-          }
-        }
-        renderMyContent();
-      });
-    });
-
-    // 4. Edit action
-    elements.libraryContentGrid.querySelectorAll('[data-action="edit-item"]').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const id = btn.getAttribute('data-id');
-        const item = window.dataStore.getItem(id);
-        state.activeDropdownId = null;
-        if (item) {
-          openEditModal(item);
-        }
-        renderMyContent();
-      });
-    });
-
-    // 5. Delete action
-    elements.libraryContentGrid.querySelectorAll('[data-action="delete-item"]').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const id = btn.getAttribute('data-id');
-        state.activeDropdownId = null;
-        const deleted = window.dataStore.deleteItem(id);
-        if (deleted) {
-          showToast(`Deleted "${deleted.title}"`);
-        }
-      });
-    });
-  };
-
-  // Close dropdowns on outside click
-  document.addEventListener('click', (e) => {
-    if (state.activeDropdownId && !e.target.closest('.card-menu-wrapper')) {
-      state.activeDropdownId = null;
-      document.querySelectorAll('.card-dropdown.active').forEach(dropdown => {
-        dropdown.classList.remove('active');
-      });
-      document.querySelectorAll('.card-menu-btn.active').forEach(btn => {
-        btn.classList.remove('active');
-      });
-    }
-  });
 
   // ==========================================================================
   // Add Content Page - Form Logic & Interactive Handlers
@@ -1339,6 +1913,15 @@ document.addEventListener('DOMContentLoaded', () => {
         state.activeDropdownId = null;
         document.querySelectorAll('.card-dropdown.active').forEach(d => d.classList.remove('active'));
       }
+      if (elements.modalOverlay && elements.modalOverlay.classList.contains('active')) {
+        closeModal();
+      }
+      if (elements.newCategoryModal && elements.newCategoryModal.classList.contains('active')) {
+        closeNewCategoryModal();
+      }
+      if (elements.contentDetailsModal && elements.contentDetailsModal.classList.contains('active')) {
+        closeDetailsModal();
+      }
     }
   });
 
@@ -1360,16 +1943,10 @@ document.addEventListener('DOMContentLoaded', () => {
         switchView('my-content');
       } else if (navTarget === 'favorites') {
         window.location.hash = 'favorites';
-        switchView('dashboard');
-        renderRecentContent(true);
-        showToast('Showing Favorited Items');
+        switchView('favorites');
       } else if (navTarget === 'categories') {
-        window.location.hash = 'dashboard';
-        switchView('dashboard');
-        const catSection = document.getElementById('categoriesSection');
-        if (catSection) {
-          catSection.scrollIntoView({ behavior: 'smooth' });
-        }
+        window.location.hash = 'categories';
+        switchView('categories');
       } else {
         showToast(`${link.querySelector('span').textContent} section`);
       }
@@ -1445,12 +2022,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && elements.modalOverlay.classList.contains('active')) {
-      closeModal();
-    }
-  });
-
   // Modal Form Submission (Edit item only)
   if (elements.addContentForm) {
     elements.addContentForm.addEventListener('submit', (e) => {
@@ -1515,10 +2086,15 @@ document.addEventListener('DOMContentLoaded', () => {
     updateSidebarBadges();
     renderStats();
     renderCategories();
+    populateCategoryDropdowns();
     if (state.currentView === 'my-content') {
       renderMyContent();
     } else if (state.currentView === 'dashboard') {
       renderRecentContent();
+    } else if (state.currentView === 'categories') {
+      renderCategoriesPage();
+    } else if (state.currentView === 'favorites') {
+      renderFavoritesPage();
     }
   });
 
@@ -1526,6 +2102,8 @@ document.addEventListener('DOMContentLoaded', () => {
   // Initialize Page
   // ==========================================================================
   updateGreeting();
+  populateCategoryDropdowns();
+  renderIconPicker();
   updateSidebarBadges();
   handleRoute();
 });
